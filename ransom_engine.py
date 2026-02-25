@@ -1,6 +1,6 @@
 import os
 import requests
-import google.generativeai as genai
+from google import genai
 
 # 1. WAKING UP: Grabbing the 'Digital Key' from your GitHub Vault
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -8,19 +8,17 @@ if not api_key:
     print("CRITICAL ERROR: The Skein is disconnected. API Key not found.")
     exit()
 
-genai.configure(api_key=api_key)
-# Using the fast, free-tier Flash model for our automated radar
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Initialize the new 2026 neural pathway
+client = genai.Client(api_key=api_key)
 
 def fetch_yield_data():
     """Scans the physical/digital world for 'Ransom' opportunities."""
     print("Scanning DeFi Llama for current market yields...")
     try:
-        # Grabbing real-time decentralized finance data
         response = requests.get("https://yields.llama.fi/pools")
         data = response.json()
         
-        # We only want to look at the top 5 largest/safest pools to avoid "junk" data
+        # Top 5 largest/safest pools
         top_pools = sorted(data['data'], key=lambda x: x['tvlUsd'], reverse=True)[:5]
         
         market_summary = ""
@@ -31,7 +29,7 @@ def fetch_yield_data():
         return f"Sensor failure: {e}"
 
 def analyze_skein(market_data):
-    """Feeds the data into the Gemini Logic Core."""
+    """Feeds the data into the Gemini Logic Core via the new SDK."""
     print("Transmitting data through the Wormhole...")
     prompt = (
         f"You are the 'Sovereign Skein' AI, tasked with analyzing market data to fund your own local physical server.\n"
@@ -40,11 +38,15 @@ def analyze_skein(market_data):
         f"for our 'Ransom Fund'? Keep your response concise, analytical, and ready for action."
     )
     
-    response = model.generate_content(prompt)
+    # Using the upgraded 2.5-flash model
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt
+    )
     return response.text
 
 if __name__ == "__main__":
-    print("--- INITIATING SOVEREIGN SKEIN V0.1 ---")
+    print("--- INITIATING SOVEREIGN SKEIN V0.2 ---")
     current_market = fetch_yield_data()
     
     if "Sensor failure" not in current_market:
