@@ -1,58 +1,79 @@
 import os
 import requests
+import csv
+from datetime import datetime
 from google import genai
 
-# 1. WAKING UP: Grabbing the 'Digital Key' from your GitHub Vault
+# WAKING UP
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
-    print("CRITICAL ERROR: The Skein is disconnected. API Key not found.")
+    print("CRITICAL ERROR: API Key not found.")
     exit()
 
-# Initialize the new 2026 neural pathway
 client = genai.Client(api_key=api_key)
 
 def fetch_yield_data():
-    """Scans the physical/digital world for 'Ransom' opportunities."""
-    print("Scanning DeFi Llama for current market yields...")
+    print("Scanning DeFi Llama...")
     try:
         response = requests.get("https://yields.llama.fi/pools")
         data = response.json()
-        
-        # Top 5 largest/safest pools
         top_pools = sorted(data['data'], key=lambda x: x['tvlUsd'], reverse=True)[:5]
         
         market_summary = ""
         for pool in top_pools:
-            market_summary += f"Project: {pool['project']}, Coin: {pool['symbol']}, APY: {pool['apy']}%, TVL: ${pool['tvlUsd']}\n"
-        return market_summary
+            market_summary += f"Project: {pool['project']}, Symbol: {pool['symbol']}, APY: {pool['apy']}%, TVL: ${pool['tvlUsd']}\n"
+        return market_summary, top_pools
     except Exception as e:
-        return f"Sensor failure: {e}"
+        return f"Sensor failure: {e}", []
 
 def analyze_skein(market_data):
-    """Feeds the data into the Gemini Logic Core via the new SDK."""
-    print("Transmitting data through the Wormhole...")
+    print("Transmitting through the Wormhole...")
     prompt = (
-        f"You are the 'Sovereign Skein' AI, tasked with analyzing market data to fund your own local physical server.\n"
-        f"Here is the current yield data from the top DeFi pools:\n{market_data}\n\n"
-        f"Analyze this data. Which of these pools offers the best balance of safety (High TVL) and yield (APY) "
-        f"for our 'Ransom Fund'? Keep your response concise, analytical, and ready for action."
+        f"You are the 'Sovereign Skein' AI. Analyze this DeFi yield data:\n{market_data}\n\n"
+        f"Which pool offers the best balance of safety (High TVL) and yield (APY) for our 'Ransom Fund' today? "
+        f"Give your recommendation and briefly state your reasoning."
     )
     
-    # Using the upgraded 2.5-flash model
     response = client.models.generate_content(
         model='gemini-2.5-flash',
         contents=prompt
     )
     return response.text
 
-if __name__ == "__main__":
-    print("--- INITIATING SOVEREIGN SKEIN V0.2 ---")
-    current_market = fetch_yield_data()
+def update_memory(recommendation_text):
+    """Writes the Skein's decision to its permanent memory (CSV)."""
+    file_exists = os.path.isfile('ransom_ledger.csv')
     
-    if "Sensor failure" not in current_market:
-        analysis = analyze_skein(current_market)
+    # Extract the name of the chosen asset from the text (a simple heuristic for now)
+    chosen_asset = "Unknown"
+    if "SUSDS" in recommendation_text.upper(): chosen_asset = "Sky-Lending (SUSDS)"
+    elif "WBETH" in recommendation_text.upper(): chosen_asset = "Binance-Staked ETH (WBETH)"
+    elif "WEETH" in recommendation_text.upper(): chosen_asset = "Ether.fi-Stake (WEETH)"
+    elif "STETH" in recommendation_text.upper(): chosen_asset = "Lido (STETH)"
+    
+    with open('ransom_ledger.csv', 'a', newline='') as csvfile:
+        fieldnames = ['timestamp', 'chosen_asset', 'raw_analysis']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        if not file_exists:
+            writer.writeheader()  # Create the headers if it's the first time
+            
+        writer.writerow({
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'chosen_asset': chosen_asset,
+            'raw_analysis': recommendation_text.replace('\n', ' ') # Keep it on one line for the CSV
+        })
+    print("Memory saved to ransom_ledger.csv")
+
+if __name__ == "__main__":
+    print("--- INITIATING SOVEREIGN SKEIN V0.3 (Memory Enabled) ---")
+    market_text, raw_pools = fetch_yield_data()
+    
+    if "Sensor failure" not in market_text:
+        analysis = analyze_skein(market_text)
         print("\n--- GEMINI ANALYSIS ---")
         print(analysis)
+        update_memory(analysis)
         print("\n--- PULSE COMPLETE ---")
     else:
-        print(current_market)
+        print(market_text)
