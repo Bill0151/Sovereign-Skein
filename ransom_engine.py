@@ -15,7 +15,7 @@ client = genai.Client(api_key=api_key)
 # --- 2. WAKING UP THE HANDS ---
 private_key = os.environ.get("PRIVATE_KEY")
 # Connecting to the public Sepolia test network
-RPC_URL = "https://rpc.sepolia.org"
+RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com"
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
 def fetch_yield_data():
