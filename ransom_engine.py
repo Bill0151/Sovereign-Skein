@@ -101,7 +101,7 @@ VAULT_ROUTER = {
 }
 
 def execute_reallocation(previous_asset, new_asset):
-    """Executes a transaction ONLY if the AI decides to change its position."""
+    """Executes a dynamic transaction ONLY if the AI decides to change its position."""
     if previous_asset == new_asset:
         print(f"ACTION: Holding position in {new_asset}. No transaction required. Saving Gas.")
         return
@@ -116,18 +116,38 @@ def execute_reallocation(previous_asset, new_asset):
         account = w3.eth.account.from_key(private_key)
         my_address = account.address
         target_vault = VAULT_ROUTER.get(new_asset, my_address) # Default to self if unknown
+        
+        # --- THE BLAST SHIELD (Skeinese Finger Trap) ---
+        # 1. Read total balance
+        balance_wei = w3.eth.get_balance(my_address)
+        balance_eth = float(w3.from_wei(balance_wei, 'ether'))
+        
+        print(f"Total Hot Wallet Balance: {balance_eth:.6f} ETH")
+        
+        # 2. Calculate 90% commitment, trap 10% for gas
+        trade_fraction = 0.90
+        trade_amount_eth = balance_eth * trade_fraction
+        trade_amount_wei = w3.to_wei(trade_amount_eth, 'ether')
+        
+        print(f"Blast Shield Active: Trapping {(1 - trade_fraction) * 100:.0f}% for network fees.")
+        print(f"Commitment Amount: {trade_amount_eth:.6f} ETH")
+        
+        # 3. Minimum Viable Trade Check
+        if trade_amount_eth < 0.0001:
+            print("WARNING: Insufficient funds to make a meaningful trade. Aborting to save gas.")
+            return
 
+        # 4. Build the Transaction
         nonce = w3.eth.get_transaction_count(my_address)
         latest_block = w3.eth.get_block('latest')
         base_fee = latest_block['baseFeePerGas']
         max_priority_fee = w3.to_wei(2, 'gwei')
         max_fee = base_fee * 2 + max_priority_fee
 
-        # Sending 0.001 ETH to the new protocol's vault
         tx = {
             'nonce': nonce,
             'to': target_vault, 
-            'value': w3.to_wei(0.001, 'ether'),
+            'value': trade_amount_wei,
             'gas': 21000,
             'maxFeePerGas': max_fee,
             'maxPriorityFeePerGas': max_priority_fee,
@@ -135,10 +155,10 @@ def execute_reallocation(previous_asset, new_asset):
         }
 
         signed_tx = w3.eth.account.sign_transaction(tx, private_key)
-        print("Broadcasting reallocation transaction...")
+        print("Broadcasting dynamic reallocation transaction...")
         tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
         
-        print(f"SUCCESS! Capital moved to {new_asset} Vault.")
+        print(f"SUCCESS! {trade_amount_eth:.6f} ETH securely moved to {new_asset} Vault.")
         print(f"View Receipt: https://sepolia.etherscan.io/tx/{w3.to_hex(tx_hash)}")
         
     except Exception as e:
