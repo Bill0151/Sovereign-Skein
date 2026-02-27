@@ -111,59 +111,55 @@ VAULT_ROUTER = {
 def execute_reallocation(previous_asset, new_asset):
     """Executes a dynamic transaction ONLY if the AI decides to change its position."""
     if previous_asset == new_asset:
-        print(f"ACTION: Holding position in {new_asset}. No transaction required.")
+        print(f"ACTION: Holding position in {new_asset}.")
         return
 
-    # [SHOUT 1] Alert on decision
-    send_telegram_alert(f"Decision: Move from {previous_asset} to {new_asset}. Activating hands...")
-
-    if not w3.is_connected():
-        send_telegram_alert("CONNECTION FAILURE: RPC tower not responding.")
-        return
+    send_telegram_alert(f"Decision: Move from {previous_asset} to {new_asset}. Checking fuel...")
 
     try:
         account = w3.eth.account.from_key(private_key)
         my_address = account.address
         target_vault = VAULT_ROUTER.get(new_asset, my_address)
 
-        # --- THE BLAST SHIELD (Skeinese Finger Trap) ---
         balance_wei = w3.eth.get_balance(my_address)
-        balance_eth = float(w3.from_wei(balance_wei, 'ether'))
         
-        trade_amount_eth = balance_eth * 0.90
-        trade_amount_wei = w3.to_wei(trade_amount_eth, 'ether')
-        
-        send_telegram_alert(f"Fingerskein active. Committing {trade_amount_eth:.4f} ETH to {new_asset}.")
+        # --- NEW: GAS SAFETY CHECK ---
+        # Calculate a safe amount to move, leaving enough for a massive gas spike
+        gas_reserve = w3.to_wei(0.01, 'ether') # Reserve 0.01 ETH for gas
+        if balance_wei <= gas_reserve:
+            msg = f"INSUFFICIENT FUEL: Balance ({w3.from_wei(balance_wei, 'ether'):.4f}) is too low to cover gas."
+            print(msg)
+            send_telegram_alert(msg)
+            return
 
-        # --- TRANSACTION LOGIC ---
+        trade_amount_wei = int((balance_wei - gas_reserve) * 0.90)
+        trade_amount_eth = float(w3.from_wei(trade_amount_wei, 'ether'))
+        
+        send_telegram_alert(f"Fingerskein active. Moving {trade_amount_eth:.4f} ETH to {new_asset}.")
+
         nonce = w3.eth.get_transaction_count(my_address)
-        latest_block = w3.eth.get_block('latest')
-        base_fee = latest_block['baseFeePerGas']
-        max_priority_fee = w3.to_wei(2, 'gwei')
-        max_fee = base_fee * 2 + max_priority_fee
-
         tx = {
             'nonce': nonce,
             'to': target_vault, 
             'value': trade_amount_wei,
             'gas': 21000,
-            'maxFeePerGas': max_fee,
-            'maxPriorityFeePerGas': max_priority_fee,
+            'maxFeePerGas': w3.to_wei(50, 'gwei'),
+            'maxPriorityFeePerGas': w3.to_wei(2, 'gwei'),
             'chainId': 11155111 
         }
 
         signed_tx = w3.eth.account.sign_transaction(tx, private_key)
         tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
         
-        # [SHOUT 2] Success alert
         receipt_url = f"https://sepolia.etherscan.io/tx/{w3.to_hex(tx_hash)}"
-        send_telegram_alert(f"SUCCESS: Capital moved. Receipt: {receipt_url}")
-        print(f"Transaction successful: {receipt_url}")
+        send_telegram_alert(f"SUCCESS: Moved to {new_asset}. Receipt: {receipt_url}")
         
     except Exception as e:
-        send_telegram_alert(f"CRITICAL EXECUTION ERROR: {e}")
-        print(f"Error: {e}")
-
+        # Convert error to string so Telegram doesn't crash on dict objects
+        error_msg = str(e)
+        print(f"Execution Error: {error_msg}")
+        send_telegram_alert(f"CRITICAL ERROR: {error_msg[:100]}")
+        
 if __name__ == "__main__":
     print("--- INITIATING SOVEREIGN SKEIN V0.6 ---")
     
