@@ -23,10 +23,13 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python ransom_engine.py # The test is over; the engine is live.
 
-      - name: Save Pulse Memory
+      - name: Update HUD
+        run: python dashboard_gen.py
+
+      - name: Save Pulse Memory and HUD
         run: |
           git config --global user.name "Sovereign-Skein-Bot"
           git config --global user.email "skein@bot.com"
-          git add ransom_ledger.csv
-          git diff --quiet && git diff --staged --quiet || git commit -m "Memory Update"
+          git add ransom_ledger.csv index.html
+          git diff --quiet && git diff --staged --quiet || git commit -m "Memory & HUD Update"
           git push
