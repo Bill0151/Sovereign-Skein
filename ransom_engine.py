@@ -163,8 +163,16 @@ def execute_reallocation(previous_asset, new_asset):
 if __name__ == "__main__":
     print("--- INITIATING SOVEREIGN SKEIN V0.6 ---")
     
-    # [SHOUT 0] The Heartbeat Ping
-    send_telegram_alert("Pulse Initiated. Scanning the Skein...")
+    # 1. Check physical fuel level immediately
+    balance_wei = w3.eth.get_balance(w3.eth.account.from_key(private_key).address)
+    balance_eth = float(w3.from_wei(balance_wei, 'ether'))
+    
+    # 2. Communicate Status to the Director
+    status_msg = f"Pulse Started. Current Fuel: {balance_eth:.4f} ETH."
+    if balance_eth < 0.01:
+        status_msg += " ⚠️ WARNING: Funds critically low for reallocation."
+    
+    send_telegram_alert(status_msg)
     
     market_text, raw_pools = fetch_yield_data()
     
