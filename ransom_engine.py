@@ -110,18 +110,25 @@ VAULT_ROUTER = {
 
 def execute_reallocation(previous_asset, new_asset):
     """Executes a dynamic transaction ONLY if the AI decides to change its position."""
+    # Log internal thoughts
+    print(f"Internal Check: Move {previous_asset} -> {new_asset}")
+    
     if previous_asset == new_asset:
-        print(f"ACTION: Holding position in {new_asset}.")
-        return
+        return # Essential notifications only: stay silent on 'Hold'
 
-    send_telegram_alert(f"Decision: Move from {previous_asset} to {new_asset}. Checking fuel...")
-
+    # Hands are now active
     try:
         account = w3.eth.account.from_key(private_key)
-        my_address = account.address
-        target_vault = VAULT_ROUTER.get(new_asset, my_address)
+        balance_wei = w3.eth.get_balance(account.address)
+        balance_eth = float(w3.from_wei(balance_wei, 'ether'))
 
-        balance_wei = w3.eth.get_balance(my_address)
+        # THE SHOUT: AI recommends a move
+        # We only shout here because this is an actual transaction attempt
+        send_telegram_alert(f"DECISION: Switching from {previous_asset} to {new_asset}.")
+
+        if balance_eth < 0.01:
+            send_telegram_alert(f"❌ PARALYSIS: Fund balance too low ({balance_eth:.4f} ETH). Cannot sign transaction.")
+            return
         
         # --- NEW: GAS SAFETY CHECK ---
         # Calculate a safe amount to move, leaving enough for a massive gas spike
@@ -161,18 +168,15 @@ def execute_reallocation(previous_asset, new_asset):
         send_telegram_alert(f"CRITICAL ERROR: {error_msg[:100]}")
         
 if __name__ == "__main__":
-    print("--- INITIATING SOVEREIGN SKEIN V0.6 ---")
+    print("--- PULSE INITIATED ---")
     
-    # 1. Check physical fuel level immediately
+    # 1. Quick Fuel Check
     balance_wei = w3.eth.get_balance(w3.eth.account.from_key(private_key).address)
     balance_eth = float(w3.from_wei(balance_wei, 'ether'))
     
-    # 2. Communicate Status to the Director
-    status_msg = f"Pulse Started. Current Fuel: {balance_eth:.4f} ETH."
-    if balance_eth < 0.01:
-        status_msg += " ⚠️ WARNING: Funds critically low for reallocation."
-    
-    send_telegram_alert(status_msg)
+    # Silence is golden, unless we are empty
+    if balance_eth < 0.005:
+        send_telegram_alert(f"🚨 STARVATION: Fund is at 0.0000. Agent is immobile.")
     
     market_text, raw_pools = fetch_yield_data()
     
