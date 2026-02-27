@@ -28,7 +28,7 @@ def send_telegram_alert(message):
             requests.post(url, json={"chat_id": chat_id, "text": f"🚨 SKEIN: {message}"}, timeout=10)
         except Exception as e:
             print(f"Failed to send Telegram alert: {e}")
-            
+
 def fetch_yield_data():
     """Scans the physical/digital world for 'Ransom' opportunities."""
     print("Scanning DeFi Llama...")
@@ -100,30 +100,25 @@ def update_memory(recommendation_text):
         })
     print(f"Memory saved to ransom_ledger.csv. Asset logged: {chosen_asset}")
 
-# ... [Keep your imports, fetch_yield_data, read_memory, analyze_skein, and update_memory functions exactly as they are] ...
-
-# --- THE VAULT ROUTER (Testnet Simulation) ---
-# We assign specific addresses to represent the DeFi protocols.
+# --- THE VAULT ROUTER ---
 VAULT_ROUTER = {
-    "STETH": "0x1111111111111111111111111111111111111111", # Lido Vault
-    "WBETH": "0x2222222222222222222222222222222222222222", # Binance Vault
-    "SUSDS": "0x3333333333333333333333333333333333333333", # Sky Vault
-    "WEETH": "0x4444444444444444444444444444444444444444"  # Ether.fi Vault
+    "STETH": "0x1111111111111111111111111111111111111111", 
+    "WBETH": "0x2222222222222222222222222222222222222222", 
+    "SUSDS": "0x3333333333333333333333333333333333333333", 
+    "WEETH": "0x4444444444444444444444444444444444444444"  
 }
-            
+
 def execute_reallocation(previous_asset, new_asset):
     """Executes a dynamic transaction ONLY if the AI decides to change its position."""
     if previous_asset == new_asset:
-        print(f"ACTION: Holding position in {new_asset}. No transaction required. Saving Gas.")
+        print(f"ACTION: Holding position in {new_asset}. No transaction required.")
         return
 
-    # [SHOUT 1] Tell the Director we have decided to move
-    send_telegram_alert(f"Decision: Move from {previous_asset} to {new_asset}. Initialising hands...")
+    # [SHOUT 1] Alert on decision
+    send_telegram_alert(f"Decision: Move from {previous_asset} to {new_asset}. Activating hands...")
 
     if not w3.is_connected():
-        msg = "CONNECTION FAILURE: Blockchain radio tower (RPC) is not responding."
-        print(msg)
-        send_telegram_alert(msg) # [SHOUT 2] Alert on connection failure
+        send_telegram_alert("CONNECTION FAILURE: RPC tower not responding.")
         return
 
     try:
@@ -131,27 +126,48 @@ def execute_reallocation(previous_asset, new_asset):
         my_address = account.address
         target_vault = VAULT_ROUTER.get(new_asset, my_address)
 
+        # --- THE BLAST SHIELD (Skeinese Finger Trap) ---
         balance_wei = w3.eth.get_balance(my_address)
         balance_eth = float(w3.from_wei(balance_wei, 'ether'))
         
-        trade_fraction = 0.90
-        trade_amount_eth = balance_eth * trade_fraction
+        trade_amount_eth = balance_eth * 0.90
+        trade_amount_wei = w3.to_wei(trade_amount_eth, 'ether')
         
-        # [SHOUT 3] Tell the Director the exact amount being committed
         send_telegram_alert(f"Fingerskein active. Committing {trade_amount_eth:.4f} ETH to {new_asset}.")
 
-        # ... [Keep the rest of your transaction building/signing code] ...
+        # --- TRANSACTION LOGIC ---
+        nonce = w3.eth.get_transaction_count(my_address)
+        latest_block = w3.eth.get_block('latest')
+        base_fee = latest_block['baseFeePerGas']
+        max_priority_fee = w3.to_wei(2, 'gwei')
+        max_fee = base_fee * 2 + max_priority_fee
 
+        tx = {
+            'nonce': nonce,
+            'to': target_vault, 
+            'value': trade_amount_wei,
+            'gas': 21000,
+            'maxFeePerGas': max_fee,
+            'maxPriorityFeePerGas': max_priority_fee,
+            'chainId': 11155111 
+        }
+
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
         tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        send_telegram_alert(f"SUCCESS: Capital moved. Receipt: https://sepolia.etherscan.io/tx/{w3.to_hex(tx_hash)}")
+        
+        # [SHOUT 2] Success alert
+        receipt_url = f"https://sepolia.etherscan.io/tx/{w3.to_hex(tx_hash)}"
+        send_telegram_alert(f"SUCCESS: Capital moved. Receipt: {receipt_url}")
+        print(f"Transaction successful: {receipt_url}")
         
     except Exception as e:
-        send_telegram_alert(f"CRITICAL ERROR during execution: {e}")
+        send_telegram_alert(f"CRITICAL EXECUTION ERROR: {e}")
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
-    print("--- INITIATING SOVEREIGN SKEIN V0.6 (The Trial) ---")
+    print("--- INITIATING SOVEREIGN SKEIN V0.6 ---")
     
-    # [NEW] Immediate Telegram Ping to verify the pulse started
+    # [SHOUT 0] The Heartbeat Ping
     send_telegram_alert("Pulse Initiated. Scanning the Skein...")
     
     market_text, raw_pools = fetch_yield_data()
@@ -164,18 +180,17 @@ if __name__ == "__main__":
         print("\n--- GEMINI ANALYSIS ---")
         print(analysis)
         
-        # Determine the new choice from the output
         new_hold = current_hold
         lines = analysis.strip().split('\n')
-        if lines[0].startswith("CHOICE:"):
+        if lines and lines[0].startswith("CHOICE:"):
             new_hold = lines[0].replace("CHOICE:", "").strip()
             
         update_memory(analysis)
         
-        # [CRITICAL FIX] Trigger the dynamic hands
         print("\n--- EXECUTION ENGINE ---")
-        execute_reallocation(current_hold, new_hold) # This was the missing line!
+        execute_reallocation(current_hold, new_hold)
         
         print("\n--- PULSE COMPLETE ---")
     else:
         print(market_text)
+        send_telegram_alert(f"Scanner Failure: {market_text}")
