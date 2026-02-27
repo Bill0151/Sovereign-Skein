@@ -1,45 +1,32 @@
-name: Sovereign Skein Heartbeat
+name: Sovereign Skein Pulse
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
-
-# Give the Skein permission to write its memory back to the repo
-permissions:
-  contents: write
+    - cron: '0 */6 * * *' # Every 6 hours
+  workflow_dispatch:      # Allows manual trigger
 
 jobs:
   analyze_market:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout the Repository
-        uses: actions/checkout@v4
-        
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
-        
+      - run: pip install -r requirements.txt
+
       - name: Fire the Synapse (Run Script)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        # Switch the '#' between the two lines below to toggle between testing and live
-        # run: python ransom_engine.py
-        run: python test_tele.py
-        
-      - name: Save Memory to Skein (Commit CSV)
+        run: python ransom_engine.py # The test is over; the engine is live.
+
+      - name: Save Pulse Memory
         run: |
           git config --global user.name "Sovereign-Skein-Bot"
           git config --global user.email "skein@bot.com"
           git add ransom_ledger.csv
-          # Only commit if there are changes to save
-          git diff --quiet && git diff --staged --quiet || git commit -m "Skein Memory Update: Run logged"
+          git diff --quiet && git diff --staged --quiet || git commit -m "Memory Update"
           git push
