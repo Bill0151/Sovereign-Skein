@@ -2,8 +2,13 @@ name: Sovereign Skein Pulse
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # The new 15-minute high-frequency pulse
-  workflow_dispatch:        # Allows manual triggering
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target Issue URL for Bounty Executor (Leave blank for normal radar pulse)'
+        required: false
+        default: ''
 
 jobs:
   pulse:
@@ -41,6 +46,14 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RABBY_ADDRESS: ${{ secrets.RABBY_ADDRESS }}
         run: python dashboard_gen.py
+
+      - name: Run Bounty Executor (Manual Strike Only)
+        if: github.event.inputs.target_url != ''
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SKEIN_GITHUB_TOKEN: ${{ secrets.SKEIN_GITHUB_TOKEN }}
+          TARGET_ISSUE_URL: ${{ github.event.inputs.target_url }}
+        run: python bounty_executor.py
 
       - name: Commit and Push Data
         run: |
