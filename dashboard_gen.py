@@ -3,6 +3,13 @@ import requests
 import csv
 from datetime import datetime
 
+def send_telegram_alert(message):
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    if token and chat_id:
+        url = f"https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}"
+        requests.get(url)
+
 def get_mining_stats(address):
     try:
         # Unmineable Public API - No keys needed, just your public address!
@@ -73,3 +80,11 @@ def generate_dashboard():
 
 if __name__ == "__main__":
     generate_dashboard()
+
+    #5 the milestone pings!
+    current_value = gbp_value  # From our API pull
+    if current_value >= 1.00:
+        # We can use a simple file-based 'check' to ensure it only pings once
+        if not os.path.exists('milestone_1.txt'):
+            send_telegram_alert("🚀 MILESTONE REACHED: The War Chest has hit £1.00! The Muscle is strong.")
+            with open('milestone_1.txt', 'w') as f: f.write('done')
