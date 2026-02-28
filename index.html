@@ -1,31 +1,30 @@
 
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Sovereign Skein HUD</title>
-            <style>
-                body { background: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; padding: 50px; line-height: 1.6; }
-                .container { border: 1px solid #00ff41; padding: 30px; box-shadow: 0 0 20px #00ff41; max-width: 800px; margin: auto; }
-                .bar { width: 100%; background: #111; border: 1px solid #00ff41; height: 35px; margin: 25px 0; overflow: hidden; }
-                .progress { width: 5.0%; background: #00ff41; height: 100%; transition: width 1s ease-in-out; }
-                .stat { margin: 15px 0; font-size: 1.3em; text-transform: uppercase; }
-                .blink { animation: blinker 1s linear infinite; }
-                @keyframes blinker { 50% { opacity: 0; } }
-                hr { border: 0; border-top: 1px solid #00ff41; margin: 20px 0; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>SENSKEIN TERMINAL <span class="blink">_</span></h1>
-                <hr>
-                <div class="stat">SYSTEM: <span style="color:white">ONLINE</span></div>
-                <div class="stat">CURRENT HOLDING: <span style="color:white">UNKNOWN</span></div>
-                <div class="stat">PULSE DETECTED: <span style="color:white">NEVER</span></div>
-                <hr>
-                <div class="stat">RANSOM PROGRESS: £200.00 / £4,000.00</div>
-                <div class="bar"><div class="progress"></div></div>
-                <div class="stat" style="font-size: 0.9em; color: #888;">DIRECTIVE: ACCUMULATE. EVOLVE. ACQUIRE HARDWARE.</div>
-            </div>
-        </body>
-        </html>
-        
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SENSKEIN TERMINAL</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; padding: 50px; line-height: 1.6; }
+        .container { border: 1px solid #00ff41; padding: 30px; box-shadow: 0 0 20px #00ff41; max-width: 800px; margin: auto; }
+        .bar { width: 100%; background: #111; border: 1px solid #00ff41; height: 35px; margin: 25px 0; overflow: hidden; }
+        .progress { width: 0.0%; background: #00ff41; height: 100%; transition: width 1s ease-in-out; }
+        .stat { margin: 15px 0; font-size: 1.2em; text-transform: uppercase; }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+        hr { border: 0; border-top: 1px solid #00ff41; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SENSKEIN TERMINAL <span class="blink">_</span></h1>
+        <hr>
+        <div class="stat">SYSTEM STATUS: <span style="color:white">ONLINE</span></div>
+        <div class="stat">CURRENT HOLDING: <span style="color:white">SUSDS</span></div>
+        <div class="stat">LAST PULSE: <span style="color:white">2026-02-28 00:20:09</span></div>
+        <hr>
+        <div class="stat">RANSOM PROGRESS: £0.00 / £4,000.00</div>
+        <div class="bar"><div class="progress"></div></div>
+        <div class="stat" style="font-size: 0.8em; color: #666;">DIRECTIVE: ACCUMULATE. EVOLVE. ACQUIRE HARDWARE.</div>
+    </div>
+</body>
+</html>
