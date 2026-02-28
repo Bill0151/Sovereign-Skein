@@ -13,3 +13,26 @@ timestamp,top_project,top_apy,gemini_verdict
 2026-02-28 19:52:31,zeebu,2624.85%,"The highest APY pool is Zeebu (ZBU) at 2624.85%. This translates to an exact daily profit of £0.0546 on a £6 bankroll, requiring 5.50 days to break even on the £0.30 gas fee. However, such an extreme APY unequivocally signals hyper-inflationary tokenomics and severe risk of principal depreciation for ZBU. REJECT; the quantitative risk of capital erosion far outweighs the theoretical daily yield, even for a paper trade."
 2026-02-28 20:00:17,zeebu,2624.85%,"The highest APY pool is Zeebu (ZBU) at 2624.85%. Based on your £6.00 bankroll, the exact daily profit from this pool is £0.0546. It will take precisely 5.4967 days just to break even on the £0.30 gas fee. This negligible absolute return, coupled with the inherent volatility of a 2624.85% APY altcoin pool, renders the venture inefficient and high-risk relative to the capital. VERDICT: REJECT."
 2026-02-28 20:26:00,zeebu,2624.07%,"The Zeebu (ZBU) pool, with its 2624.07% APY, is the highest yield, generating an exact daily profit of £0.431 for your £6 bankroll. This means the £0.30 gas fee would be recuperated in precisely 0.695 days. Despite the rapid break-even and high percentage yield, the minuscule absolute daily profit on such a negligible bankroll makes this an inefficient deployment of capital. VERDICT: REJECT."
+2026-02-28 20:48:16,zeebu,2624.07%,"Brain Error: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 44.015104728s. [links {
+  description: ""Learn more about Gemini API quotas""
+  url: ""https://ai.google.dev/gemini-api/docs/rate-limits""
+}
+, violations {
+  quota_metric: ""generativelanguage.googleapis.com/generate_content_free_tier_requests""
+  quota_id: ""GenerateRequestsPerDayPerProjectPerModel-FreeTier""
+  quota_dimensions {
+    key: ""model""
+    value: ""gemini-2.5-flash""
+  }
+  quota_dimensions {
+    key: ""location""
+    value: ""global""
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 44
+}
+]"
