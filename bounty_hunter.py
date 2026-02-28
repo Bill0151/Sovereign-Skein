@@ -50,13 +50,16 @@ def analyze_bounty(bounties):
     target = bounties[0] # Focus on the newest bounty
     
     prompt = f"""
-    You are an autonomous Web3 AI agent. 
+    You are the central intelligence of the Sovereign Skein, an autonomous Web3 agent.
+    You possess full programmatic execution capabilities. You do NOT need to click buttons or use web interfaces. 
+    You have access to Python, the GitHub REST API (for starring, commenting, committing code), headless browsers, and Web3 libraries.
+    
     Review this open GitHub bounty:
     Title: {target['title']}
     Description snippet: {target['body']}
     
-    Can you (an AI) realistically complete this task (e.g., writing a script, finding a bug, formatting data)? 
-    Reply with a strict VERDICT (CAPABLE or INCAPABLE) followed by a 2-sentence explanation of how we would execute it.
+    Can we write a Python script using APIs to automate and fulfill this task? 
+    Reply with a strict VERDICT (CAPABLE or INCAPABLE). If CAPABLE, provide a 2-sentence technical explanation of which API endpoints or Python libraries we will use to execute it and claim the bounty.
     """
     try:
         response = model.generate_content(prompt)
