@@ -6,12 +6,11 @@ from datetime import datetime
 BACKLOG_FILE = 'bounty_backlog.csv'
 
 def fetch_github_bounties():
-    print("Skeinwatch Collector: Scanning GitHub for Web3 bounties...")
+    print("Skeinwatch Collector V4: Scanning GitHub...")
     query = "is:issue is:open label:bounty crypto OR web3 OR defi"
     url = f"https://api.github.com/search/issues?q={query}&sort=created&order=desc&per_page=5"
-    headers = {"Accept": "application/vnd.github.v3+json"}
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers={"Accept": "application/vnd.github.v3+json"}, timeout=10)
         return response.json().get("items", []) if response.status_code == 200 else []
     except Exception as e:
         print(f"GitHub API Error: {e}")
@@ -19,10 +18,14 @@ def fetch_github_bounties():
 
 def main():
     existing_urls = set()
+    next_id = 1
+    
     if os.path.exists(BACKLOG_FILE):
         with open(BACKLOG_FILE, 'r', encoding='utf-8') as f:
             for row in csv.DictReader(f):
                 existing_urls.add(row['url'])
+                if row.get('id') and row['id'].isdigit():
+                    next_id = max(next_id, int(row['id']) + 1)
                 
     issues = fetch_github_bounties()
     new_bounties = []
@@ -31,22 +34,25 @@ def main():
         url = issue.get("html_url")
         if url not in existing_urls:
             new_bounties.append({
+                "id": str(next_id),
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "title": issue.get("title"),
                 "url": url,
-                "body_snippet": issue.get("body", "")[:500].replace('\n', ' ').replace('\r', ''),
-                "status": "PENDING"
+                "body_snippet": issue.get("body", "")[:800].replace('\n', ' ').replace('\r', ''),
+                "status": "PENDING",
+                "draft_payload": ""
             })
+            next_id += 1
             
     if new_bounties:
         file_exists = os.path.exists(BACKLOG_FILE)
         with open(BACKLOG_FILE, 'a', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=["timestamp", "title", "url", "body_snippet", "status"])
+            writer = csv.DictWriter(f, fieldnames=["id", "timestamp", "title", "url", "body_snippet", "status", "draft_payload"])
             if not file_exists: writer.writeheader()
             writer.writerows(new_bounties)
         print(f"Added {len(new_bounties)} new bounties to the backlog.")
     else:
-        print("Backlog is up to date. Zero API cost incurred.")
+        print("Backlog is up to date.")
 
 if __name__ == "__main__":
     main()
