@@ -2,11 +2,11 @@ name: Sovereign Skein Pulse
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 */4 * * *'
   workflow_dispatch:
     inputs:
       target_url:
-        description: 'Target Issue URL for Bounty Executor (Leave blank for normal radar pulse)'
+        description: 'Target Issue URL for Bounty Executor (Leave blank for normal pulse)'
         required: false
         default: ''
 
@@ -26,31 +26,27 @@ jobs:
           python-version: '3.10'
 
       - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests google-generativeai
+        run: pip install requests google-generativeai
 
-      - name: Run Mercenary Radar (Passive Only)
+      - name: 👁️ Run Collector (Zero API Cost)
+        if: github.event.inputs.target_url == ''
+        run: python bounty_collector.py
+
+      - name: 🧠 Run Assessor (Telegram Dispatch)
+        if: github.event.inputs.target_url == ''
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python bounty_assessor.py
+
+      - name: ⚔️ Run Mercenary Radar
         if: github.event.inputs.target_url == ''
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python mercenary_radar.py
 
-      - name: Run Bounty Hunter Radar (Passive Only)
-        if: github.event.inputs.target_url == ''
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python bounty_hunter.py
-
-      - name: Update Command Center HUD (Passive Only)
-        if: github.event.inputs.target_url == ''
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          RABBY_ADDRESS: ${{ secrets.RABBY_ADDRESS }}
-        run: python dashboard_gen.py
-
-      - name: Run Bounty Executor (Manual Strike Only)
+      - name: 🚀 Run Bounty Executor (Manual Strike)
         if: github.event.inputs.target_url != ''
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -59,10 +55,10 @@ jobs:
           TARGET_ISSUE_URL: ${{ github.event.inputs.target_url }}
         run: python bounty_executor.py
 
-      - name: Commit and Push Data
+      - name: 💾 Commit Memory
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "Sovereign Skein Auto-Pulse"
           git add -A
-          git commit -m "Pulse: Radar Data & HUD Update" || echo "No changes to commit"
+          git commit -m "Pulse: Skeinwatch Data Update" || echo "No changes to commit"
           git push
