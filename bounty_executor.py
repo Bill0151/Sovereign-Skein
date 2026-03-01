@@ -37,7 +37,11 @@ def main():
     for row in rows:
         # --- ACTION 1: GENERATE DRAFT (Uses Pro AI) ---
         if row['status'] == 'DRAFT_REQUESTED':
-            prompt = f"Write a highly technical, professional response and code fix for this GitHub issue. Include this wallet for the bounty payout: {wallet_address}. Issue Title: {row['title']} Details: {row['body_snippet']}"
+            # Temporary Override for Target #5 to lock the bounty without hallucinating
+            if row['id'] == '5':
+                 prompt = f"Write a highly professional 'Claim Proposal' for this GitHub issue. DO NOT write the final code. Instead, outline a technical plan to build the fuzz harness using Rust's `cargo-fuzz` or Python's `hypothesis`. State that we will open a PR within 48 hours. Include this wallet for the bounty payout: {wallet_address}. Issue Title: {row['title']} Details: {row['body_snippet']}"
+            else:
+                 prompt = f"Write a highly technical, professional response and code fix for this GitHub issue. Include this wallet for the bounty payout: {wallet_address}. Issue Title: {row['title']} Details: {row['body_snippet']}"
             payload = heavy_compute(prompt, api_key) + "\n\n---\n*Task executed autonomously by the Sovereign Skein.*"
             
             if "CRITICAL BRAIN FAILURE" in payload:
