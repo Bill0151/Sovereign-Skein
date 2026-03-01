@@ -46,8 +46,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python mercenary_radar.py
 
-      - name: 🚀 Run Bounty Executor (Manual Strike)
-        if: github.event.inputs.target_url != ''
+      - name: 🚀 Run Bounty Executor (Autonomous)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SKEIN_GITHUB_TOKEN: ${{ secrets.SKEIN_GITHUB_TOKEN }}
