@@ -38,7 +38,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python bounty_assessor.py
+          SKEIN_GITHUB_TOKEN: ${{ secrets.SKEIN_GITHUB_TOKEN }}
+          RABBY_ADDRESS: ${{ secrets.RABBY_ADDRESS }}
+        run: python bounty_executor.py
 
       - name: ⚔️ Run Mercenary Radar
         if: github.event.inputs.target_url == ''
