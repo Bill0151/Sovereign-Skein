@@ -2,38 +2,42 @@ name: Sovereign Skein Pulse
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */4 * * *' # Every 4 hours
   workflow_dispatch:
-    inputs:
-      target_url:
-        description: 'Target Issue URL for Bounty Executor (Leave blank for normal pulse)'
-        required: false
-        default: ''
 
 jobs:
   pulse:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      issues: write
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
-      - name: Install Dependencies
-        run: pip install requests google-generativeai
-
-      - name: 👁️ Run Collector (Zero API Cost)
-        if: github.event.inputs.target_url == ''
+          
+      - name: Install V5 Dependencies
+        run: pip install requests google-genai
+        
+      - name: Run Bounty Collector
         run: python bounty_collector.py
 
-      - name: 🧠 Run Assessor (Telegram Dispatch)
-        if: github.event.inputs.target_url == ''
+      - name: Run Bounty Assessor & Telegram Listener
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python bounty_assessor.py
+
+      - name: Run Mercenary Radar
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python mercenary_radar.py
+
+      - name: Run Bounty Executor (Autonomous)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -41,25 +45,11 @@ jobs:
           SKEIN_GITHUB_TOKEN: ${{ secrets.SKEIN_GITHUB_TOKEN }}
           RABBY_ADDRESS: ${{ secrets.RABBY_ADDRESS }}
         run: python bounty_executor.py
-
-      - name: ⚔️ Run Mercenary Radar
-        if: github.event.inputs.target_url == ''
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python mercenary_radar.py
-
-      - name: 🚀 Run Bounty Executor (Autonomous)
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          SKEIN_GITHUB_TOKEN: ${{ secrets.SKEIN_GITHUB_TOKEN }}
-          RABBY_ADDRESS: ${{ secrets.RABBY_ADDRESS }}
-          TARGET_ISSUE_URL: ${{ github.event.inputs.target_url }}
-        run: python bounty_executor.py
-
-      - name: 💾 Commit Memory
+        
+      - name: Commit State Updates
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "Sovereign Skein Auto-Pulse"
           git add -A
-          git commit -m "Pulse: Skeinwatch Data Update" || echo "No changes to commit"
+          git commit -m "Pulse V5: Skeinwatch Data Update" || echo "No changes to commit"
           git push
