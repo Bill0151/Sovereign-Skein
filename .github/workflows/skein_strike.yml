@@ -1,0 +1,46 @@
+name: Sovereign Skein Strike
+
+on:
+  workflow_dispatch:
+
+jobs:
+  strike:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install V6 Dependencies
+        run: pip install requests google-genai
+        
+      - name: Run Bounty Assessor (Check Telegram)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SKEIN_GITHUB_TOKEN: ${{ secrets.SKEIN_GITHUB_TOKEN }}
+        run: python bounty_assessor.py
+
+      - name: Run Bounty Executor (Execute Orders)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SKEIN_GITHUB_TOKEN: ${{ secrets.SKEIN_GITHUB_TOKEN }}
+          RABBY_ADDRESS: ${{ secrets.RABBY_ADDRESS }}
+        run: python bounty_executor.py
+        
+      - name: Commit State Updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "Sovereign Skein Auto-Strike"
+          git add -A
+          git commit -m "Strike V6: Executed Terminal Commands" || echo "No changes to commit"
+          git push
