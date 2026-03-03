@@ -1,0 +1,15 @@
+{
+  "project": "Sovereign Skein",
+  "version": "9.0.0-alpha",
+  "structure": {
+    "root": {
+      "agents": ["bounty_collector.py", "bounty_assessor.py", "bounty_executor.py"],
+      "config": ["system_prompts.json", "api_limits.json"],
+      "state": ["bounty_backlog.csv", "audit_logs.jsonl"],
+      "vault": "storage for individual target payloads and code-fixes",
+      "treasury": ["ledger.csv", "wallet_monitor.py"]
+    }
+  },
+  "current_milestone": "5090_TI_ACQUISITION",
+  "operational_mode": "PATIENT_HUNTER"
+}
