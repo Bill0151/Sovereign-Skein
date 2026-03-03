@@ -150,3 +150,4 @@ Please retry in 21.677203383s. [links {
 2026-03-02 16:42:06,zeebu,2333.21%,"The Zeebu (ZBU) pool, with a 2333.21% APY, offers the highest yield. Your £6 bankroll would generate an exact daily profit of £0.3835. The £0.30 gas fee would be recouped in precisely 0.78 days. For a paper trade, this extremely rapid break-even and high theoretical yield override typical project risks.  VERDICT: EXECUTE"
 2026-03-03 08:37:20,APT-USDC,41907.56157%,Daily profit is £6.00 * (41907.56157% / 365) = £0.0689. Gas break-even is £0.30 / £0.0689 = 4.35 days. VERDICT: REJECT
 2026-03-03 12:52:27,APT-USDC,41907.56157%,"Daily profit is calculated as £6.00 * (41907.56157% / 365) = £6.89, yielding a gas break-even of £0.30 / £6.89 = 0.04 days. VERDICT: EXECUTE."
+2026-03-03 16:43:11,APT-USDC,41907.56157%,"Daily profit is £6.00 * (41907.56157% / 365) = £0.0689, leading to a gas break-even time of £0.30 / £0.0689 = 4.35 days. VERDICT: REJECT"
