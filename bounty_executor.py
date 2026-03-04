@@ -203,10 +203,19 @@ def main():
                 
                 success, error_text = post_to_github(owner, repo, issue_number, payload_to_post, github_token)
                 if success:
-                    row['status'] = 'COMPLETED'
-                    # Save the deployed record to the COMPLETED folder
-                    write_to_vault(row['id'], row['status'], row['title'], row['url'], payload_to_post, "deployed")
-                    send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL - Target #{row['id']}</b>")
+                    # V10.2 FIX: Smart Status Resolution
+                    is_application = any(keyword in payload_to_post.lower() for keyword in ["/apply", "proposal", "will be opened", "acknowledge the bounty"])
+                    
+                    if is_application:
+                        row['status'] = 'APPLIED'
+                        # Save to the APPLIED folder in the Vault
+                        write_to_vault(row['id'], row['status'], row['title'], row['url'], payload_to_post, "applied")
+                        send_telegram(bot_token, chat_id, f"👻 <b>APPLIED - Target #{row['id']}</b>\nProposal posted. Now listening for approval.")
+                    else:
+                        row['status'] = 'COMPLETED'
+                        # Save to the COMPLETED folder in the Vault
+                        write_to_vault(row['id'], row['status'], row['title'], row['url'], payload_to_post, "deployed")
+                        send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL - Target #{row['id']}</b>")
                 else:
                     row['status'] = 'ERROR'
                     send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED - Target #{row['id']}</b>\nAPI Error: {error_text}")
