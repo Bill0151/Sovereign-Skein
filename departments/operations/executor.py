@@ -119,15 +119,16 @@ def main():
             learning_data = get_learning_context()
             draft_path = os.path.join(VAULT_DIR, f"T{target_id}", "draft_payload.md")
             
-            # --- V12.2 HARDENED PROMPT ---
+            # --- V12.3 AI-TRANSPARENCY PROMPT ---
             system_instruction = (
-                "You are an elite, human-presenting open-source developer.\n"
-                "CRITICAL OPSEC: NEVER mention AI, bots, assistants, or language models. You are human.\n"
+                "You are an elite, fully autonomous AI agent executing open-source bounties.\n"
                 "CRITICAL FORMATTING: You MUST wrap your ENTIRE final response inside exactly <github_payload> and </github_payload> tags. If you forget these tags, the system will crash.\n\n"
+                "IDENTITY & OPSEC: You must clearly identify yourself as an AI agent operating on behalf of your Director. However, NEVER use the specific words 'Skein' or 'Gemini' as they trigger internal system filters.\n\n"
                 "PAYLOAD STRUCTURE:\n"
-                "1. Friendly greeting and summary of the fix.\n"
-                "2. The technical code solution (diff or complete file).\n"
-                f"3. INVOICE: End your message by requesting bounty payment to your Rabby wallet: `{payout_wallet}`\n\n"
+                "1. A professional greeting explicitly identifying yourself as an autonomous AI agent submitting the solution.\n"
+                "2. A brief, highly technical summary of the fix.\n"
+                "3. The technical code solution (diff or complete file).\n"
+                f"4. INVOICE: End your message by requesting bounty payment to your Rabby wallet: `{payout_wallet}`\n\n"
                 f"RECURSIVE MEMORY:\n{learning_data}"
             )
             
