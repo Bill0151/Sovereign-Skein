@@ -2,8 +2,6 @@ import os
 import sys
 
 # --- V12 PATH RESOLUTION ---
-# This ensures 'core' can be found regardless of whether the script is run 
-# from the project root or from within the departments/operations folder.
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if "departments" in current_dir:
     project_root = os.path.abspath(os.path.join(current_dir, "../../"))
@@ -30,7 +28,7 @@ VAULT_DIR = os.path.join(project_root, 'vault')
 def load_settings():
     """Loads the central configuration for the Mind-Skein."""
     if not os.path.exists(SETTINGS_FILE):
-        return {"bankroll": 6.0, "max_gas_gbp": 0.30, "autonomy_level": 1}
+        return {"bankroll": 6.0, "max_gas_gbp": 0.30, "autonomy_level": 1, "payout_wallet": "PENDING_WALLET_ADDRESS"}
     with open(SETTINGS_FILE, 'r') as f:
         return json.load(f)
 
@@ -39,15 +37,14 @@ def get_sidecar_context(target_id):
     sidecar_path = os.path.join(VAULT_DIR, f"T{target_id}", "intel.json")
     if not os.path.exists(sidecar_path):
         return None
-    with open(sidecar_path, 'r') as f:
+    with open(sidecar_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def get_learning_context():
     """Retrieves historical HITL feedback to inject into the brain."""
     context = ""
     if os.path.exists(LEARNING_LOG):
-        with open(LEARNING_LOG, 'r') as f:
-            # Get the last 10 learning events
+        with open(LEARNING_LOG, 'r', encoding='utf-8') as f:
             lines = f.readlines()[-10:]
             for line in lines:
                 try:
@@ -89,6 +86,7 @@ def main():
 
     settings = load_settings()
     autonomy_level = settings.get("autonomy_level", 1)
+    payout_wallet = settings.get("payout_wallet", "NOT_CONFIGURED")
     
     if not os.path.exists(DATABASE_FILE):
         print(f"Index not found at {DATABASE_FILE}. Intelligence required.")
@@ -105,7 +103,6 @@ def main():
         target_id = row['id']
         status = row['status']
         
-        # Check if deployment is authorized (L3+ for AI-ONLY or Manual /post)
         is_manual_post = (status == 'POST_REQUESTED')
         is_auto_strike = (status == 'AUTO_STRIKE_REQUESTED' and autonomy_level >= 3)
 
@@ -119,15 +116,20 @@ def main():
 
             learning_data = get_learning_context()
             
-            # Construct the Recursive Prompt
+            # --- V12.1 INVOICE & CLAIM PROMPT ---
             system_instruction = (
-                "You are the MIND-SKEIN V12 Operational Node. Your task is to generate a technical fix.\n"
+                "You are the MIND-SKEIN V12 Operational Node, an elite autonomous developer claiming a bounty.\n"
                 "OPSEC PROTOCOL: You MUST wrap your final public-facing response in <github_payload> tags.\n"
-                "Everything outside these tags is for internal reasoning only and will be SCRUBBED.\n"
+                "Everything outside these tags is for internal reasoning only and will be SCRUBBED.\n\n"
+                "PAYLOAD STRUCTURE (MANDATORY):\n"
+                "1. A professional greeting stating you are submitting the solution for this bounty/issue.\n"
+                "2. A brief, human-readable summary of the fix.\n"
+                "3. The technical payload (the code diff or implementation).\n"
+                f"4. An 'Invoice' section requesting the bounty be sent to this wallet/address: `{payout_wallet}`\n\n"
                 f"RECURSIVE MEMORY:\n{learning_data}"
             )
             
-            user_prompt = f"Target Requirements:\n{intel.get('body', '')}\n\nDraft the solution now."
+            user_prompt = f"Target Requirements:\n{intel.get('body', '')}\n\nDraft the complete solution and invoice now."
             
             raw_output = heavy_compute(f"{system_instruction}\n\n{user_prompt}", api_key)
             
@@ -138,7 +140,6 @@ def main():
                 print(f"🛑 RED-LINE ABORT: T{target_id} contains forbidden nomenclature or malformed tags.")
                 continue
 
-            # Parse URL for GitHub API
             try:
                 url_parts = row['url'].rstrip('/').split('/')
                 owner, repo, issue_num = url_parts[-4], url_parts[-3], url_parts[-1]
@@ -146,7 +147,7 @@ def main():
                 print(f"Error parsing URL for T{target_id}: {row['url']}")
                 continue
 
-            print(f"🚀 Deploying Payload to {owner}/{repo}...")
+            print(f"🚀 Deploying Payload and Invoice to {owner}/{repo}...")
             post_success, error_text = post_to_github(owner, repo, issue_num, scrubbed_payload, github_token)
             
             if post_success:
