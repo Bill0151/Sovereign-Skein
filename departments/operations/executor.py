@@ -78,7 +78,10 @@ def post_to_github(owner, repo, issue_number, payload, github_token):
         "Accept": "application/vnd.github.v3+json"
     }
     res = requests.post(strike_url, headers=headers, json={"body": payload}, timeout=15)
-    return res.status_code == 201, res.text
+    if res.status_code == 201:
+        # Return success and the exact HTML URL to the new comment
+        return True, res.json().get('html_url', f"https://github.com/{owner}/{repo}/issues/{issue_number}")
+    return False, res.text
 
 def main():
     api_key = os.getenv("GEMINI_API_KEY")
@@ -177,16 +180,16 @@ def main():
                     continue
 
                 print(f"🚀 Deploying Payload and Invoice to {owner}/{repo}...")
-                post_success, error_text = post_to_github(owner, repo, issue_num, scrubbed_payload, github_token)
+                post_success, result_data = post_to_github(owner, repo, issue_num, scrubbed_payload, github_token)
                 
                 if post_success:
                     row['status'] = 'COMPLETED'
                     print(f"✅ Strike Successful: T{target_id}")
-                    send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL: T{target_id}</b>\n\nCode and Invoice deployed to <code>{owner}/{repo}</code>.")
+                    send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL: T{target_id}</b>\n\nPayload deployed!\n🔗 <a href='{result_data}'>View Live Comment</a>")
                 else:
                     row['status'] = 'ERROR'
-                    print(f"❌ Strike Failed: {error_text}")
-                    send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED: T{target_id}</b>\n\nAPI Error: <code>{error_text}</code>")
+                    print(f"❌ Strike Failed: {result_data}")
+                    send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED: T{target_id}</b>\n\nAPI Error: <code>{result_data}</code>")
 
     # Update Index at the end of the run
     with open(DATABASE_FILE, 'w', newline='', encoding='utf-8') as f:
