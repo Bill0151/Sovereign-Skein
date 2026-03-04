@@ -12,7 +12,7 @@ id,status,timestamp,title,url,payout_est,sidecar_link
 4024122426,PENDING,2026-03-04 22:03:10,[Code Quality] Introduce TypedDict types for folder and rule data structures in main.py,https://github.com/abhimehro/ctrld-sync/issues/556,0.00,vault/T4024122426/intel.json
 4024122297,PENDING,2026-03-04 22:03:10,[Code Quality] Add type annotations to fix_env.py,https://github.com/abhimehro/ctrld-sync/issues/555,0.00,vault/T4024122297/intel.json
 4024100460,PENDING,2026-03-04 22:03:10,[Code Quality] Add unit tests for CountdownTimer in src/utils/ui.py,https://github.com/abhimehro/email-security-pipeline/issues/483,0.00,vault/T4024100460/intel.json
-4024090127,DRAFT_REQUESTED,2026-03-04 22:03:10,[Code Quality] Add *.bak pattern to .gitignore to prevent future accidental commits,https://github.com/abhimehro/personal-config/issues/541,0.00,vault/T4024090127/intel.json
+4024090127,DRAFT_READY,2026-03-04 22:03:10,[Code Quality] Add *.bak pattern to .gitignore to prevent future accidental commits,https://github.com/abhimehro/personal-config/issues/541,0.00,vault/T4024090127/intel.json
 4024070885,PENDING,2026-03-04 22:03:10,[dad] Dependency Health Report - Week of 2026-03-04,https://github.com/tomsiwik/laboratory/issues/4,0.00,vault/T4024070885/intel.json
 4024041520,PENDING,2026-03-04 22:03:10,Pulse 2026-03-04 20:41:30,https://github.com/Sadnik13/driftwood-cli/issues/7922,0.00,vault/T4024041520/intel.json
 4024041287,PENDING,2026-03-04 22:03:10,Rebrand to 'Agent Tank' and Implement Industrial-Minimalist UI,https://github.com/integry/llm-limit-watcher/issues/15,0.00,vault/T4024041287/intel.json
