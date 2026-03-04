@@ -5,10 +5,62 @@ import time
 import requests
 from google import genai
 
-# --- V10.0 CONFIGURATION ---
+# --- V11.0 CONFIGURATION ---
 BACKLOG_FILE = 'bounty_backlog.csv'
 VAULT_DIR = 'vault'
 MAX_STARS_PER_RUN = 2
+
+def process_telegram_commands(bot_token, rows):
+    """V11.0: Reads /post and /amend commands from Telegram and updates the CSV state."""
+    print("Checking Telegram for Director commands...")
+    url = f"https://api.telegram.org/bot{bot_token}/getUpdates"
+    updates_made = False
+    try:
+        res = requests.get(url, timeout=10).json()
+        if not res.get("ok") or not res.get("result"):
+            return rows, False
+
+        highest_update_id = 0
+
+        for item in res["result"]:
+            update_id = item["update_id"]
+            highest_update_id = max(highest_update_id, update_id)
+            
+            message = item.get("message", {})
+            text = message.get("text", "").strip()
+            
+            if text.startswith("/post"):
+                parts = text.split()
+                if len(parts) >= 2:
+                    target_id = parts[1]
+                    for row in rows:
+                        if row['id'] == target_id and row['status'] in ['DRAFT_SENT', 'DRAFT_REQUESTED', 'AMEND_REQUESTED']:
+                            row['status'] = 'POST_REQUESTED'
+                            updates_made = True
+                            print(f"📡 COMMAND RECEIVED: Authorized POST for Target #{target_id}")
+                            send_telegram(bot_token, message.get("chat", {}).get("id"), f"🫡 <b>Order Acknowledged:</b> Executing strike on Target #{target_id}")
+            
+            elif text.startswith("/amend"):
+                parts = text.split(" ", 2)
+                if len(parts) >= 3:
+                    target_id = parts[1]
+                    notes = parts[2]
+                    for row in rows:
+                        if row['id'] == target_id:
+                            row['status'] = 'AMEND_REQUESTED'
+                            row['draft_payload'] = f"CRITICAL CORRECTION: {notes}"
+                            updates_made = True
+                            print(f"📡 COMMAND RECEIVED: Ordered AMEND for Target #{target_id}")
+                            send_telegram(bot_token, message.get("chat", {}).get("id"), f"🫡 <b>Order Acknowledged:</b> Amending Target #{target_id} with new parameters.")
+
+        # Clear the queue by requesting updates starting from the next ID
+        if highest_update_id > 0:
+            requests.get(f"{url}?offset={highest_update_id + 1}", timeout=10)
+            
+        return rows, updates_made
+    except Exception as e:
+        print(f"Error checking Telegram commands: {e}")
+        return rows, False
 
 def star_repository(owner, repo, github_token):
     print(f"Starring repository: {owner}/{repo}")
@@ -50,23 +102,17 @@ def check_is_open(owner, repo, issue_num, github_token):
     except Exception:
         return True 
 
-# V10.0 FIX: Dynamic Hierarchical Folder Structure
 def write_to_vault(target_id, status, title, url, payload, suffix="draft"):
-    """Saves payloads into organized folders based on their current status."""
-    # Ensure the status folder exists: e.g., vault/DRAFT_SENT/target_1002/
     folder_path = os.path.join(VAULT_DIR, status.upper(), f"target_{target_id}")
     os.makedirs(folder_path, exist_ok=True)
-    
     filename = os.path.join(folder_path, f"payload_{suffix}.md")
     
     with open(filename, 'w', encoding='utf-8') as f:
-        # Inject metadata at the top of the file for the Director's reference
         f.write(f"# TARGET {target_id}: {title}\n")
         f.write(f"**Source URL:** {url}\n")
         f.write(f"**Current Status:** {status}\n")
         f.write(f"---\n\n")
         f.write(payload)
-        
     return filename
 
 def post_to_github(owner, repo, issue_number, payload, github_token):
@@ -86,6 +132,9 @@ def main():
     with open(BACKLOG_FILE, 'r', encoding='utf-8') as f:
         rows = list(csv.DictReader(f))
 
+    # V11.0: Intercept and process Telegram commands before acting
+    rows, csv_needs_update = process_telegram_commands(bot_token, rows)
+
     stars_clicked = 0
 
     for row in rows:
@@ -95,7 +144,6 @@ def main():
             
             if not check_is_open(owner, repo, issue_num, github_token):
                 row['status'] = 'CLOSED_MISSED'
-                print(f"Target #{row['id']} is closed. Moving to CLOSED_MISSED.")
                 continue
 
             comments_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_num}/comments"
@@ -131,7 +179,6 @@ def main():
                 full_payload = payload + signature
                 row['status'] = 'DRAFT_SENT'
                 
-                # V10.0 FIX: Save to hierarchical folder structure!
                 file_path = write_to_vault(row['id'], row['status'], row['title'], row['url'], full_payload, "draft")
                 row['draft_payload'] = f"VAULT_PATH:{file_path}"
                 
@@ -175,7 +222,6 @@ def main():
                             row['status'] = 'COMPLETED'
                             send_telegram(bot_token, chat_id, f"✅👻 <b>AUTO-STRIKE SUCCESSFUL - #{row['id']}</b>")
                         
-                        # Save the final deployed payload
                         write_to_vault(row['id'], row['status'], row['title'], row['url'], full_payload, "deployed")
                     else:
                         row['status'] = 'ERROR'
@@ -191,7 +237,6 @@ def main():
                     filepath = payload_to_post.split("VAULT_PATH:")[1]
                     try:
                         with open(filepath, 'r', encoding='utf-8') as v:
-                            # Strip the meta-data header if we are posting from a Vault file
                             content = v.read()
                             if "---" in content:
                                 payload_to_post = content.split("---", 1)[1].strip()
@@ -203,17 +248,14 @@ def main():
                 
                 success, error_text = post_to_github(owner, repo, issue_number, payload_to_post, github_token)
                 if success:
-                    # V10.2 FIX: Smart Status Resolution
+                    # V10.2 Smart Status Check
                     is_application = any(keyword in payload_to_post.lower() for keyword in ["/apply", "proposal", "will be opened", "acknowledge the bounty"])
-                    
                     if is_application:
                         row['status'] = 'APPLIED'
-                        # Save to the APPLIED folder in the Vault
                         write_to_vault(row['id'], row['status'], row['title'], row['url'], payload_to_post, "applied")
                         send_telegram(bot_token, chat_id, f"👻 <b>APPLIED - Target #{row['id']}</b>\nProposal posted. Now listening for approval.")
                     else:
                         row['status'] = 'COMPLETED'
-                        # Save to the COMPLETED folder in the Vault
                         write_to_vault(row['id'], row['status'], row['title'], row['url'], payload_to_post, "deployed")
                         send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL - Target #{row['id']}</b>")
                 else:
@@ -223,6 +265,7 @@ def main():
                 row['status'] = 'CLOSED_MISSED'
                 send_telegram(bot_token, chat_id, f"🛑 <b>STRIKE ABORTED - Target #{row['id']}</b>\nTarget closed.")
 
+    # Save CSV back out with any Telegram modifications + execution modifications
     with open(BACKLOG_FILE, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=["id", "status", "timestamp", "title", "url", "body_snippet", "draft_payload"])
         writer.writeheader()
