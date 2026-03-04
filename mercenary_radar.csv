@@ -153,3 +153,4 @@ Please retry in 21.677203383s. [links {
 2026-03-03 16:43:11,APT-USDC,41907.56157%,"Daily profit is £6.00 * (41907.56157% / 365) = £0.0689, leading to a gas break-even time of £0.30 / £0.0689 = 4.35 days. VERDICT: REJECT"
 2026-03-03 20:29:46,USDC,23022.23893%,Daily profit is £6.00 * (23022.23893/100/365) = £3.7845. Gas break-even is £0.30 / £3.7845 = 0.079 days. VERDICT: EXECUTE.
 2026-03-03 20:52:40,USDC,23022.23893%,"Daily profit is £6.00 * (23022.23893% / 365) = £3.7845, leading to a gas break-even of £0.30 / £3.7845 = 0.0793 days. VERDICT: EXECUTE"
+2026-03-04 07:21:53,APT-USDC,41907.56157%,"Daily profit is £6.00 * (41907.56157% / 365) = £6.89. Gas break-even is £0.30 / £6.89 = 0.04 days, which is < 1 day. VERDICT: EXECUTE"
