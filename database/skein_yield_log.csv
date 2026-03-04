@@ -1,0 +1,2 @@
+timestamp,action,project,symbol,apy_percent,tvl_usd,simulated_investment_gbp,status
+2026-03-04 21:53:18,SHADOW_TRIAL,uniswap-v3,USDC-MAG7.SSI,49.39,6168048,6.0,PENDING_REVIEW
