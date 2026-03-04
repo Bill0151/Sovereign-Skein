@@ -5,7 +5,6 @@ import json
 import time
 import requests
 from google import genai
-from core.redline_filter import RedLineFilter
 
 # --- V12 PATH RESOLUTION ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,6 +15,8 @@ else:
 
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+
+from core.redline_filter import RedLineFilter
 
 # --- V12.0 CONFIGURATION ---
 SETTINGS_FILE = os.path.join(project_root, 'core/settings.json')
