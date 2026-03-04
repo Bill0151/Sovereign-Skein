@@ -32,6 +32,17 @@ def load_settings():
     with open(SETTINGS_FILE, 'r') as f:
         return json.load(f)
 
+def send_telegram(bot_token, chat_id, text):
+    """Sends real-time strike telemetry to the Director."""
+    if not bot_token or not chat_id:
+        return
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+    try:
+        requests.post(url, json=payload, timeout=10)
+    except Exception:
+        pass
+
 def get_sidecar_context(target_id):
     """Fetches the high-fidelity intelligence context for a target."""
     sidecar_path = os.path.join(VAULT_DIR, f"T{target_id}", "intel.json")
@@ -79,6 +90,8 @@ def post_to_github(owner, repo, issue_number, payload, github_token):
 def main():
     api_key = os.getenv("GEMINI_API_KEY")
     github_token = os.getenv("SKEIN_GITHUB_TOKEN")
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
     
     if not all([api_key, github_token]):
         print("Critical API keys missing. Aborting strike.")
@@ -138,6 +151,7 @@ def main():
             
             if not success:
                 print(f"🛑 RED-LINE ABORT: T{target_id} contains forbidden nomenclature or malformed tags.")
+                send_telegram(bot_token, chat_id, f"🛑 <b>RED-LINE ABORT: T{target_id}</b>\nStrike halted. Payload contained forbidden nomenclature.")
                 continue
 
             try:
@@ -153,9 +167,11 @@ def main():
             if post_success:
                 row['status'] = 'COMPLETED'
                 print(f"✅ Strike Successful: T{target_id}")
+                send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL: T{target_id}</b>\n\nCode and Invoice deployed to <code>{owner}/{repo}</code>.")
             else:
                 row['status'] = 'ERROR'
                 print(f"❌ Strike Failed: {error_text}")
+                send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED: T{target_id}</b>\n\nAPI Error: <code>{error_text}</code>")
 
     # Update Index
     with open(DATABASE_FILE, 'w', newline='', encoding='utf-8') as f:
