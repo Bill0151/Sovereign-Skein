@@ -5,7 +5,7 @@ import time
 import requests
 from google import genai
 
-# --- V9.1 CONFIGURATION ---
+# --- V9.2 CONFIGURATION ---
 BACKLOG_FILE = 'bounty_backlog.csv'
 VAULT_DIR = 'vault'
 MAX_STARS_PER_RUN = 2
@@ -28,7 +28,7 @@ def heavy_compute(prompt, api_key):
             return "CRITICAL BRAIN FAILURE: Blocked by API Safety Filters."
         return response.text.strip()
     except Exception as e:
-        # V9.1 FIX: We now capture the exact error to diagnose
+        # V9.1/V9.2 FIX: Capture the exact error to diagnose
         return f"CRITICAL BRAIN FAILURE: {str(e)}"
 
 def send_telegram(bot_token, chat_id, message):
@@ -81,13 +81,22 @@ def main():
         if row['status'] == 'APPLIED':
             print(f"Checking for approval on Target #{row['id']}...")
             owner, repo, issue_num = parse_github_url(row['url'])
+            
+            # V9.2 FIX: Do not waste API calls reading comments on closed issues.
+            if not check_is_open(owner, repo, issue_num, github_token):
+                row['status'] = 'CLOSED_MISSED'
+                print(f"Target #{row['id']} is closed. Moving to CLOSED_MISSED.")
+                continue
+
             comments_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_num}/comments"
             try:
                 res = requests.get(comments_url, headers={"Authorization": f"token {github_token}"}, timeout=10).json()
                 for comment in res:
                     comment_author = comment.get('user', {}).get('login', '').lower()
                     comment_body = comment.get('body', '').lower()
-                    if comment_author != actor.lower():
+                    
+                    # V9.2 FIX: Strict identity check. Ignore both actions-user and Bill0151.
+                    if comment_author not in [actor.lower(), "bill0151"]:
                         if any(word in comment_body for word in ["proceed", "approved", "go ahead", "assigned", "looks good"]):
                             row['status'] = 'AUTO_STRIKE_REQUESTED'
                             send_telegram(bot_token, chat_id, f"🎯 <b>APPROVAL DETECTED!</b> Target #{row['id']} is a GO. Initiating full strike.")
