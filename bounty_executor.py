@@ -5,7 +5,7 @@ import time
 import requests
 from google import genai
 
-# --- V9.2 CONFIGURATION ---
+# --- V10.0 CONFIGURATION ---
 BACKLOG_FILE = 'bounty_backlog.csv'
 VAULT_DIR = 'vault'
 MAX_STARS_PER_RUN = 2
@@ -28,7 +28,6 @@ def heavy_compute(prompt, api_key):
             return "CRITICAL BRAIN FAILURE: Blocked by API Safety Filters."
         return response.text.strip()
     except Exception as e:
-        # V9.1/V9.2 FIX: Capture the exact error to diagnose
         return f"CRITICAL BRAIN FAILURE: {str(e)}"
 
 def send_telegram(bot_token, chat_id, message):
@@ -51,11 +50,23 @@ def check_is_open(owner, repo, issue_num, github_token):
     except Exception:
         return True 
 
-def write_to_vault(target_id, payload, suffix="draft"):
-    os.makedirs(VAULT_DIR, exist_ok=True)
-    filename = os.path.join(VAULT_DIR, f"target_{target_id}_{suffix}.md")
+# V10.0 FIX: Dynamic Hierarchical Folder Structure
+def write_to_vault(target_id, status, title, url, payload, suffix="draft"):
+    """Saves payloads into organized folders based on their current status."""
+    # Ensure the status folder exists: e.g., vault/DRAFT_SENT/target_1002/
+    folder_path = os.path.join(VAULT_DIR, status.upper(), f"target_{target_id}")
+    os.makedirs(folder_path, exist_ok=True)
+    
+    filename = os.path.join(folder_path, f"payload_{suffix}.md")
+    
     with open(filename, 'w', encoding='utf-8') as f:
-        f.write(f"# Target {target_id} Payload ({suffix.upper()})\n\n{payload}")
+        # Inject metadata at the top of the file for the Director's reference
+        f.write(f"# TARGET {target_id}: {title}\n")
+        f.write(f"**Source URL:** {url}\n")
+        f.write(f"**Current Status:** {status}\n")
+        f.write(f"---\n\n")
+        f.write(payload)
+        
     return filename
 
 def post_to_github(owner, repo, issue_number, payload, github_token):
@@ -82,7 +93,6 @@ def main():
             print(f"Checking for approval on Target #{row['id']}...")
             owner, repo, issue_num = parse_github_url(row['url'])
             
-            # V9.2 FIX: Do not waste API calls reading comments on closed issues.
             if not check_is_open(owner, repo, issue_num, github_token):
                 row['status'] = 'CLOSED_MISSED'
                 print(f"Target #{row['id']} is closed. Moving to CLOSED_MISSED.")
@@ -95,7 +105,6 @@ def main():
                     comment_author = comment.get('user', {}).get('login', '').lower()
                     comment_body = comment.get('body', '').lower()
                     
-                    # V9.2 FIX: Strict identity check. Ignore both actions-user and Bill0151.
                     if comment_author not in [actor.lower(), "bill0151"]:
                         if any(word in comment_body for word in ["proceed", "approved", "go ahead", "assigned", "looks good"]):
                             row['status'] = 'AUTO_STRIKE_REQUESTED'
@@ -120,9 +129,12 @@ def main():
                 send_telegram(bot_token, chat_id, f"⚠️ <b>Drafting Failed for Target #{row['id']}</b>\n\n<b>Diagnostic:</b>\n<code>{payload}</code>")
             else:
                 full_payload = payload + signature
-                file_path = write_to_vault(row['id'], full_payload, "draft")
-                row['draft_payload'] = f"VAULT_PATH:{file_path}"
                 row['status'] = 'DRAFT_SENT'
+                
+                # V10.0 FIX: Save to hierarchical folder structure!
+                file_path = write_to_vault(row['id'], row['status'], row['title'], row['url'], full_payload, "draft")
+                row['draft_payload'] = f"VAULT_PATH:{file_path}"
+                
                 repo_name = os.getenv("GITHUB_REPOSITORY")
                 draft_url = f"https://github.com/{repo_name}/blob/main/{file_path}"
                 msg = f"📄 <b>DRAFT READY - Target #{row['id']}</b>\n\nPayload secured in Vault.\n\n🔗 <a href='{draft_url}'>View Full Draft</a>\n\n⚡ Reply /post {row['id']} or /amend {row['id']} [notes]"
@@ -156,13 +168,15 @@ def main():
                 if check_is_open(owner, repo, issue_number, github_token):
                     success, error_text = post_to_github(owner, repo, issue_number, full_payload, github_token)
                     if success:
-                        write_to_vault(row['id'], full_payload, "deployed")
                         if is_application:
                             row['status'] = 'APPLIED'
                             send_telegram(bot_token, chat_id, f"👻 <b>APPLIED - Target #{row['id']}</b>\nThe Ghost has submitted an application and is waiting for approval.")
                         else:
                             row['status'] = 'COMPLETED'
                             send_telegram(bot_token, chat_id, f"✅👻 <b>AUTO-STRIKE SUCCESSFUL - #{row['id']}</b>")
+                        
+                        # Save the final deployed payload
+                        write_to_vault(row['id'], row['status'], row['title'], row['url'], full_payload, "deployed")
                     else:
                         row['status'] = 'ERROR'
                         send_telegram(bot_token, chat_id, f"❌ <b>AUTO-STRIKE FAILED - #{row['id']}</b>\nAPI Error: {error_text}")
@@ -177,7 +191,12 @@ def main():
                     filepath = payload_to_post.split("VAULT_PATH:")[1]
                     try:
                         with open(filepath, 'r', encoding='utf-8') as v:
-                            payload_to_post = v.read()
+                            # Strip the meta-data header if we are posting from a Vault file
+                            content = v.read()
+                            if "---" in content:
+                                payload_to_post = content.split("---", 1)[1].strip()
+                            else:
+                                payload_to_post = content
                     except Exception as e:
                         print(f"Vault retrieval error: {e}")
                         continue
@@ -185,7 +204,8 @@ def main():
                 success, error_text = post_to_github(owner, repo, issue_number, payload_to_post, github_token)
                 if success:
                     row['status'] = 'COMPLETED'
-                    write_to_vault(row['id'], payload_to_post, "deployed")
+                    # Save the deployed record to the COMPLETED folder
+                    write_to_vault(row['id'], row['status'], row['title'], row['url'], payload_to_post, "deployed")
                     send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL - Target #{row['id']}</b>")
                 else:
                     row['status'] = 'ERROR'
