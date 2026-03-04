@@ -1,0 +1,10 @@
+{
+  "project": "SILICON CHRYSALIS",
+  "version": "12.0.0",
+  "autonomy_level": 1,
+  "bankroll_gbp": 6.0,
+  "gas_threshold_gbp": 0.30,
+  "target_milestone_gbp": 4000.0,
+  "payout_wallet": "YOUR_WALLET_ADDRESS",
+  "opsec_enabled": true
+}
