@@ -1,0 +1,12 @@
+{
+  "id": "4024382981",
+  "title": "TS-002 Add gh-projects sync hooks",
+  "body": "Sync tasks.json to GitHub Projects columns.",
+  "user": "Emz1998",
+  "labels": [
+    "automation"
+  ],
+  "repo_url": "https://api.github.com/repos/Emz1998/avaris-ai",
+  "created_at": "2026-03-04T21:59:28Z",
+  "raw_api_url": "https://api.github.com/repos/Emz1998/avaris-ai/issues/6"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "4024396974",
+  "title": "[Codex Improvement] Address skill density spikes with structural guardrails",
+  "body": "<!-- codex-improvement:skill-density-spike -->\nRun: 2026-03-04-PM\n\n## Delivery Contract\n- Owner: codex\n- Due: 2026-03-07 UTC (3 day target)\n- Priority: medium\n\n## Trigger\nSkill density spikes detected in: firestore, schedulingLogic, metadataConfig, automation\n\n## Why This Matters\nCategory-level spikes indicate recurring friction requiring stronger policy guardrails.\n\n## Suggested Action\nAdd structural constraints for affected skill areas and monitor for 2-3 runs.\n\n## Evidence\n- firestore: 75 (prev 45)\n- schedulingLogic: 56 (prev 37)\n- metadataConfig: 40 (prev 19)\n- automation: 145 (prev 93)\n\n## Safety\n- No direct push to main\n- PR-only remediation\n",
+  "user": "monsoonfirepottery-byte",
+  "labels": [
+    "automation",
+    "epic:codex-improvement"
+  ],
+  "repo_url": "https://api.github.com/repos/monsoonfirepottery-byte/monsoonfire-portal",
+  "created_at": "2026-03-04T22:02:52Z",
+  "raw_api_url": "https://api.github.com/repos/monsoonfirepottery-byte/monsoonfire-portal/issues/285"
+}

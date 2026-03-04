@@ -1,0 +1,14 @@
+{
+  "id": "4024041287",
+  "title": "Rebrand to 'Agent Tank' and Implement Industrial-Minimalist UI",
+  "body": "### Context\nThe project is rebranding from 'Watcher' to 'Agent Tank' to better reflect its role as the 'fuel' gauge for AI coding agents. This involves an industrial-minimalist aesthetic, updating the visual language to resemble hardware panels and liquid tanks rather than generic software components.\n\n### Requirements\n1.  **Header/Branding:** Update the main header to read `AGENT TANK` (with 'TANK' emphasized) and replace the existing logo with a minimalist U-shaped/vertical tank icon.\n2.  **Progress Bars ('Tanks'):** Redesign the progress bars to look like glass vials. Add a `repeating-linear-gradient` to the track for measurement tick marks (every 20%). Apply inset shadows and an inner glow to the fill to simulate liquid.\n3.  **Card Accents ('Panels'):** Add a subtle dot-grid background to the agent cards. Use a high-quality monospace font (e.g., JetBrains Mono, monospace) for all numerical data (percentages, reset times).\n4.  **Layout & Indicators:** Increase the vertical padding on cards and height of the progress bars to create a 'Silo' look. Wrap model lists in a subtle pill background and add a 6px glowing status dot (Green, Yellow, Red) next to each model name based on its usage tier.\n5.  **Tab & Favicon Monitor:** Update the document title format to `(XX%) Model | Agent Tank`. Change the dynamically generated favicon from a pie chart to a vertical draining/filling tank icon.\n\n### Acceptance Criteria\n- The header displays the 'Agent Tank' brand and new icon.\n- Progress bars exhibit the liquid glass effect with visible measurement tick marks.\n- Agent cards have a subtle dot-grid background, and numbers use a monospace font.\n- Model names display a colored 6px dot corresponding to their usage tier (0-50% green, 51-80% yellow, 81-100% red).\n- The browser tab title correctly formats the highest usage and the favicon renders a vertical tank.\n\n---\n*Created by ProPR AI Planner*",
+  "user": "gitfixio[bot]",
+  "labels": [
+    "AI",
+    "AI-done",
+    "propr-planned"
+  ],
+  "repo_url": "https://api.github.com/repos/integry/llm-limit-watcher",
+  "created_at": "2026-03-04T20:41:28Z",
+  "raw_api_url": "https://api.github.com/repos/integry/llm-limit-watcher/issues/15"
+}

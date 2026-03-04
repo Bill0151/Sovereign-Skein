@@ -1,0 +1,13 @@
+{
+  "id": "4023567034",
+  "title": "[Codex Improvement] Reduce repeated tool retry loops",
+  "body": "<!-- codex-improvement:tool-retry-loop-cluster -->\nRun: 2026-03-04-AM\n\n## Trigger\n1 tool retry cluster(s) crossed threshold >=2.\n\n## Why This Matters\nRepeated identical retries waste cycles and hide root causes.\n\n## Suggested Action\nStop after repeated signatures and switch to structured fallback strategies.\n\n## Evidence\n- daily-interaction::analyze [runtime_error] consecutive-failure streak: 2\n\n## Safety\n- No direct push to main\n- PR-only remediation\n",
+  "user": "monsoonfirepottery-byte",
+  "labels": [
+    "automation",
+    "epic:codex-improvement"
+  ],
+  "repo_url": "https://api.github.com/repos/monsoonfirepottery-byte/monsoonfire-portal",
+  "created_at": "2026-03-04T18:53:21Z",
+  "raw_api_url": "https://api.github.com/repos/monsoonfirepottery-byte/monsoonfire-portal/issues/279"
+}

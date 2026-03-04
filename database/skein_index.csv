@@ -1,0 +1,31 @@
+id,status,timestamp,title,url,payout_est,sidecar_link
+4024396974,PENDING,2026-03-04 22:03:10,[Codex Improvement] Address skill density spikes with structural guardrails,https://github.com/monsoonfirepottery-byte/monsoonfire-portal/issues/285,0.00,vault/T4024396974/intel.json
+4024396522,PENDING,2026-03-04 22:03:10,Develop Rmd for pre-Plan Team data summaries,https://github.com/MargaretSiple-NOAA/goa-ai-data-reports/issues/117,0.00,vault/T4024396522/intel.json
+4024382981,PENDING,2026-03-04 22:03:10,TS-002 Add gh-projects sync hooks,https://github.com/Emz1998/avaris-ai/issues/6,0.00,vault/T4024382981/intel.json
+4024356322,PENDING,2026-03-04 22:03:10,Pulse 2026-03-04 21:52:47,https://github.com/Sadnik13/driftwood-cli/issues/7924,0.00,vault/T4024356322/intel.json
+4024345974,PENDING,2026-03-04 22:03:10,[Codex Improvement] Stabilize repeated CI failure cluster,https://github.com/monsoonfirepottery-byte/monsoonfire-portal/issues/281,0.00,vault/T4024345974/intel.json
+4024235188,PENDING,2026-03-04 22:03:10,🚨 GADGET HUNTER - Auto-update Failed,https://github.com/chinodevcontact-ops/gadget-hunter/issues/39,0.00,vault/T4024235188/intel.json
+4024228475,PENDING,2026-03-04 22:03:10,[security] Weekly Security Review — 2026-03-04,https://github.com/slashwhy/super-todo/issues/22,0.00,vault/T4024228475/intel.json
+4024208261,PENDING,2026-03-04 22:03:10,Pulse 2026-03-04 21:17:24,https://github.com/Sadnik13/driftwood-cli/issues/7923,0.00,vault/T4024208261/intel.json
+4024202217,PENDING,2026-03-04 22:03:10,"$1,000 to the first person who finds something poorly engineered in this ~91k LOC vibe-coded codebase",https://github.com/peteromallet/desloppify/issues/204,0.00,vault/T4024202217/intel.json
+4024122517,COMPLETED,2026-03-04 22:03:10,[Code Quality] Add _CONNECT_ERROR_HINT for httpx.ConnectError in api_client retry logic,https://github.com/abhimehro/ctrld-sync/issues/557,0.00,vault/T4024122517/intel.json
+4024122426,PENDING,2026-03-04 22:03:10,[Code Quality] Introduce TypedDict types for folder and rule data structures in main.py,https://github.com/abhimehro/ctrld-sync/issues/556,0.00,vault/T4024122426/intel.json
+4024122297,PENDING,2026-03-04 22:03:10,[Code Quality] Add type annotations to fix_env.py,https://github.com/abhimehro/ctrld-sync/issues/555,0.00,vault/T4024122297/intel.json
+4024100460,PENDING,2026-03-04 22:03:10,[Code Quality] Add unit tests for CountdownTimer in src/utils/ui.py,https://github.com/abhimehro/email-security-pipeline/issues/483,0.00,vault/T4024100460/intel.json
+4024090127,PENDING,2026-03-04 22:03:10,[Code Quality] Add *.bak pattern to .gitignore to prevent future accidental commits,https://github.com/abhimehro/personal-config/issues/541,0.00,vault/T4024090127/intel.json
+4024070885,PENDING,2026-03-04 22:03:10,[dad] Dependency Health Report - Week of 2026-03-04,https://github.com/tomsiwik/laboratory/issues/4,0.00,vault/T4024070885/intel.json
+4024041520,PENDING,2026-03-04 22:03:10,Pulse 2026-03-04 20:41:30,https://github.com/Sadnik13/driftwood-cli/issues/7922,0.00,vault/T4024041520/intel.json
+4024041287,PENDING,2026-03-04 22:03:10,Rebrand to 'Agent Tank' and Implement Industrial-Minimalist UI,https://github.com/integry/llm-limit-watcher/issues/15,0.00,vault/T4024041287/intel.json
+4024012944,PENDING,2026-03-04 22:03:10,AI Memory Phase 0 Implementation (read-only),https://github.com/office-hue/impactshop-notes/issues/35,0.00,vault/T4024012944/intel.json
+4023956656,PENDING,2026-03-04 22:03:10,🚨 GADGET HUNTER - Auto-update Failed,https://github.com/chinodevcontact-ops/gadget-hunter/issues/38,0.00,vault/T4023956656/intel.json
+4023904342,PENDING,2026-03-04 22:03:10,[Test Improver] Monthly Activity 2026-03,https://github.com/norrietaylor/tt2/issues/176,0.00,vault/T4023904342/intel.json
+4023845905,PENDING,2026-03-04 22:03:10,Pulse 2026-03-04 19:56:51,https://github.com/Sadnik13/driftwood-cli/issues/7921,0.00,vault/T4023845905/intel.json
+4023782845,PENDING,2026-03-04 22:03:10,Automated Threat Response,https://github.com/lcampbell2/trackside/issues/61,0.00,vault/T4023782845/intel.json
+4023775119,PENDING,2026-03-04 22:03:10,FAILED: Automated Tests(3),https://github.com/bcgov/api-services-portal/issues/1368,0.00,vault/T4023775119/intel.json
+4023736194,PENDING,2026-03-04 22:03:10,AI behaviour Obvservations,https://github.com/C7-Game/OpenCiv3/issues/908,0.00,vault/T4023736194/intel.json
+4023734758,PENDING,2026-03-04 22:03:10,🚨 GADGET HUNTER - Auto-update Failed,https://github.com/chinodevcontact-ops/gadget-hunter/issues/37,0.00,vault/T4023734758/intel.json
+4023721159,PENDING,2026-03-04 22:03:10,Canada's 'Strategic Defiance': Carney Challenges Trump as North America Fractures over AI Sovereignty,https://github.com/throwawayspam4466-crypto/zevs-politics-analysis/issues/88,0.00,vault/T4023721159/intel.json
+4023700810,PENDING,2026-03-04 22:03:10,Pulse 2026-03-04 19:22:57,https://github.com/Sadnik13/driftwood-cli/issues/7920,0.00,vault/T4023700810/intel.json
+4023643637,PENDING,2026-03-04 22:03:10,Create AI function to take PR diff and branch name and get the associated ticket and updated status (based on diff).,https://github.com/KieranStewart/trello-bored/issues/70,0.00,vault/T4023643637/intel.json
+4023567034,PENDING,2026-03-04 22:03:10,[Codex Improvement] Reduce repeated tool retry loops,https://github.com/monsoonfirepottery-byte/monsoonfire-portal/issues/279,0.00,vault/T4023567034/intel.json
+4023566832,PENDING,2026-03-04 22:03:10,[Codex Improvement] Reduce interaction clarification loops,https://github.com/monsoonfirepottery-byte/monsoonfire-portal/issues/278,0.00,vault/T4023566832/intel.json
