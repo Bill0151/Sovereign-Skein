@@ -4,6 +4,24 @@ import csv
 import time
 import requests
 import subprocess
+from dotenv import load_dotenv
+
+# --- V12 PATH RESOLUTION ---
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if "departments" in current_dir:
+    project_root = os.path.abspath(os.path.join(current_dir, "../../"))
+else:
+    project_root = current_dir 
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# --- SECURE VAULT DECRYPTION ---
+load_dotenv(os.path.join(project_root, '.env'))
+
+DATABASE_FILE = os.path.join(project_root, 'database/skein_index.csv')
+
+# --- V12.0 CONFIGURATION ---
 
 # --- V12 PATH RESOLUTION ---
 current_dir = os.path.dirname(os.path.abspath(__file__))

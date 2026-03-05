@@ -5,6 +5,7 @@ import json
 import time
 import requests
 from google import genai
+from dotenv import load_dotenv
 
 # --- V12 PATH RESOLUTION ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,6 +16,9 @@ else:
 
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+
+# --- SECURE VAULT DECRYPTION ---
+load_dotenv(os.path.join(project_root, '.env'))
 
 from core.redline_filter import RedLineFilter
 
