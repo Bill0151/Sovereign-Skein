@@ -160,3 +160,4 @@ Please retry in 21.677203383s. [links {
 2026-03-04 17:27:43,WBTC-USDT,30441.79601%,Daily profit is (£6.00 * 30441.79601%) / 365 = £5.004. Gas break-even time is £0.30 / £5.004 = 0.06 days. VERDICT: EXECUTE
 2026-03-04 20:29:15,WAVAX-USDC,65846.81318%,"Daily profit is £6.00 * (65846.81318% / 365) = £10.82, making the gas break-even time £0.30 / £10.82 = 0.028 days. VERDICT: EXECUTE"
 2026-03-05 01:53:02,APT-USDC,41907.56157%,"Daily profit is £6.00 * (41907.56157% / 365) = £6.89, so gas break-even is £0.30 / £6.89 = 0.0435 days. VERDICT: EXECUTE"
+2026-03-05 05:12:06,APT-USDC,41907.56157%,Daily profit is £6.00 * (41907.56157% / 365) ≈ £6.89; gas break-even is £0.30 / £6.89 ≈ 0.0435 days. VERDICT: EXECUTE.
