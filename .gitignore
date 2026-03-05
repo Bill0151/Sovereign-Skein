@@ -1,2 +1,6 @@
 # CRITICAL OPSEC: Never commit environment variables
 .env
+#V12 OPSEC: Ghost Protocol (Never commit intel, drafts, or memory)
+vault/
+database/
+logs/
