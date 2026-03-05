@@ -1,0 +1,2 @@
+# CRITICAL OPSEC: Never commit environment variables
+.env
