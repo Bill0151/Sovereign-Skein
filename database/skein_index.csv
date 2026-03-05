@@ -29,3 +29,33 @@ id,status,timestamp,title,url,payout_est,sidecar_link
 4023643637,PENDING,2026-03-04 22:03:10,Create AI function to take PR diff and branch name and get the associated ticket and updated status (based on diff).,https://github.com/KieranStewart/trello-bored/issues/70,0.00,vault/T4023643637/intel.json
 4023567034,PENDING,2026-03-04 22:03:10,[Codex Improvement] Reduce repeated tool retry loops,https://github.com/monsoonfirepottery-byte/monsoonfire-portal/issues/279,0.00,vault/T4023567034/intel.json
 4023566832,PENDING,2026-03-04 22:03:10,[Codex Improvement] Reduce interaction clarification loops,https://github.com/monsoonfirepottery-byte/monsoonfire-portal/issues/278,0.00,vault/T4023566832/intel.json
+4029730699,PENDING,2026-03-05 17:59:42,🚨 GADGET HUNTER - Auto-update Failed,https://github.com/chinodevcontact-ops/gadget-hunter/issues/55,0.00,vault/T4029730699/intel.json
+4029698814,PENDING,2026-03-05 17:59:42,Pulse 2026-03-05 17:45:05,https://github.com/Sadnik13/driftwood-cli/issues/7943,0.00,vault/T4029698814/intel.json
+4029691315,PENDING,2026-03-05 17:59:42,AI Radar failed — 2026-03-05,https://github.com/jobaercfc/ai-radar/issues/15,0.00,vault/T4029691315/intel.json
+4029647542,PENDING,2026-03-05 17:59:42,[AI] 사용자 신뢰도 확보를 위한 답변 검증 로직 및 프롬프트 최적화,https://github.com/minyeophan/AI_LawDoctor/issues/12,0.00,vault/T4029647542/intel.json
+4029647282,PENDING,2026-03-05 17:59:42,[AI] 법률 도우미 챗봇 구현: 챗봇 엔진 구축 및 인터페이스 연결,https://github.com/minyeophan/AI_LawDoctor/issues/11,0.00,vault/T4029647282/intel.json
+4029638160,PENDING,2026-03-05 17:59:42,📊 Docs Eval Report - 2026-03-05,https://github.com/nicholasdbrady/foundry-docs/issues/57,0.00,vault/T4029638160/intel.json
+4029544145,PENDING,2026-03-05 17:59:42,feat: track XCP-ng version with updatecli and parameterize download URLs,https://github.com/gounthar/xcp-ng-scaleway-elastic-metal/issues/1,0.00,vault/T4029544145/intel.json
+4029497552,PENDING,2026-03-05 17:59:42,"Phase 5: Advanced AI features (Pair Programmer, Rubber Duck, Interview, Code Story)",https://github.com/MedouneSGB/javamind-ai/issues/6,0.00,vault/T4029497552/intel.json
+4029497297,PENDING,2026-03-05 17:59:42,"Phase 4: Learning system (curriculum, challenges, daily kata)",https://github.com/MedouneSGB/javamind-ai/issues/5,0.00,vault/T4029497297/intel.json
+4029497154,PENDING,2026-03-05 17:59:42,"Phase 3: AI foundation (streaming, Chat, Tutor, Code Review)",https://github.com/MedouneSGB/javamind-ai/issues/4,0.00,vault/T4029497154/intel.json
+4029266982,PENDING,2026-03-05 17:59:42,[CI Daily Report] CI Daily Health Report — 2026-03-05,https://github.com/sombaner/tailspin-toystore/issues/133,0.00,vault/T4029266982/intel.json
+4029121629,PENDING,2026-03-05 17:59:42,"[Test Improver] test: edge-case coverage for SessionKey, sanitize_name, and ProfileStore",https://github.com/soilSpoon/opengoose/issues/31,0.00,vault/T4029121629/intel.json
+4029121691,PENDING,2026-03-05 17:59:42,[Test Improver] Monthly Activity 2026-03,https://github.com/soilSpoon/opengoose/issues/32,0.00,vault/T4029121691/intel.json
+4029043833,PENDING,2026-03-05 17:59:42,🚨 GADGET HUNTER - Auto-update Failed,https://github.com/chinodevcontact-ops/gadget-hunter/issues/54,0.00,vault/T4029043833/intel.json
+4028983143,PENDING,2026-03-05 17:59:42,[Chore] GitHub Actions 기반 주간 집계 자동화 설정,https://github.com/boost-study-10/coding-test/issues/6,0.00,vault/T4028983143/intel.json
+4028979551,PENDING,2026-03-05 17:59:42,Pulse 2026-03-05 15:29:08,https://github.com/Sadnik13/driftwood-cli/issues/7942,0.00,vault/T4028979551/intel.json
+4028969232,PENDING,2026-03-05 17:59:42,[Feature] Discord 알림 메시지 생성 로직 구현,https://github.com/boost-study-10/coding-test/issues/5,0.00,vault/T4028969232/intel.json
+4028966147,PENDING,2026-03-05 17:59:42,【GitHub Trending】hve-core,https://github.com/web1992/Favorites/issues/260,0.00,vault/T4028966147/intel.json
+4028964218,PENDING,2026-03-05 17:59:42,【GitHub Trending】mcp-for-beginners,https://github.com/web1992/Favorites/issues/256,0.00,vault/T4028964218/intel.json
+4028927102,PENDING,2026-03-05 17:59:42,[Feature] 주간 코딩테스트 자동 집계 및 Discord 알림 시스템 구축,https://github.com/boost-study-10/coding-test/issues/1,0.00,vault/T4028927102/intel.json
+4028815602,PENDING,2026-03-05 17:59:42,Article publish failed: 2026-03-06,https://github.com/yeongseon/aibc-news/issues/191,0.00,vault/T4028815602/intel.json
+4028644605,PENDING,2026-03-05 17:59:42,🚨 GADGET HUNTER - Auto-update Failed,https://github.com/chinodevcontact-ops/gadget-hunter/issues/53,0.00,vault/T4028644605/intel.json
+4028579352,PENDING,2026-03-05 17:59:42,Pulse 2026-03-05 14:27:30,https://github.com/Sadnik13/driftwood-cli/issues/7941,0.00,vault/T4028579352/intel.json
+4028571226,PENDING,2026-03-05 17:59:42,⚠️ Concalls Sync Failed - 2026-03-05,https://github.com/myconcall-sys/myconcall/issues/58,0.00,vault/T4028571226/intel.json
+4028484826,PENDING,2026-03-05 17:59:42,"[code-simplifier] Code Simplification - March 5, 2026",https://github.com/Z3Prover/z3/issues/8868,0.00,vault/T4028484826/intel.json
+4028368716,PENDING,2026-03-05 17:59:42,🚨 GADGET HUNTER - Auto-update Failed,https://github.com/chinodevcontact-ops/gadget-hunter/issues/52,0.00,vault/T4028368716/intel.json
+4028347873,PENDING,2026-03-05 17:59:42,[Code Quality] Replace `try/except pass` with `contextlib.suppress` in `_parse_rate_limit_headers`,https://github.com/abhimehro/ctrld-sync/issues/570,0.00,vault/T4028347873/intel.json
+4028347758,PENDING,2026-03-05 17:59:42,[Code Quality] Add unit tests for `render_progress_bar` and `_get_progress_bar_width`,https://github.com/abhimehro/ctrld-sync/issues/569,0.00,vault/T4028347758/intel.json
+4028347628,PENDING,2026-03-05 17:59:42,[Code Quality] Add test for `_retry_request(max_retries=0)` raises RuntimeError,https://github.com/abhimehro/ctrld-sync/issues/568,0.00,vault/T4028347628/intel.json
+4028328293,PENDING,2026-03-05 17:59:42,[noob-test] 📚 Foundry Docs Noob Test Report - 2026-03-05,https://github.com/nicholasdbrady/foundry-docs/issues/56,0.00,vault/T4028328293/intel.json

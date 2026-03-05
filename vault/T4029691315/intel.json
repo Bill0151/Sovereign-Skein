@@ -1,0 +1,13 @@
+{
+  "id": "4029691315",
+  "title": "AI Radar failed \u2014 2026-03-05",
+  "body": "The AI Radar daily brief generation failed on 2026-03-05.\n\nCheck the [workflow run](https://github.com/jobaercfc/ai-radar/actions/runs/22708351304) for details.",
+  "user": "github-actions[bot]",
+  "labels": [
+    "bug",
+    "automation"
+  ],
+  "repo_url": "https://api.github.com/repos/jobaercfc/ai-radar",
+  "created_at": "2026-03-05T17:43:30Z",
+  "raw_api_url": "https://api.github.com/repos/jobaercfc/ai-radar/issues/15"
+}

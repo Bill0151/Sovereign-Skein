@@ -1,0 +1,13 @@
+{
+  "id": "4029497297",
+  "title": "Phase 4: Learning system (curriculum, challenges, daily kata)",
+  "body": "## Objectif\\nSyst\u00e8me d'apprentissage Java structur\u00e9 avec progression.\\n\\n## T\u00e2ches\\n- [ ] learning-curriculum.ts (3 tracks, ~15 concepts)\\n- [ ] learningStore.ts (persist\u00e9 localStorage)\\n- [ ] LearningNav.tsx (arbre visuel avec \u00e9tats locked/available/mastered)\\n- [ ] ChallengeMode.tsx + timer + hints progressifs + score\\n- [ ] Daily Kata (g\u00e9n\u00e9ration IA au d\u00e9marrage si nouveau jour)\\n- [ ] ProgressBadge + streak counter dans StatusBar\\n\\n## Validation\\nG\u00e9n\u00e9rer un d\u00e9fi, le r\u00e9soudre, soumettre, voir progression.",
+  "user": "MedouneSGB",
+  "labels": [
+    "ai",
+    "feature"
+  ],
+  "repo_url": "https://api.github.com/repos/MedouneSGB/javamind-ai",
+  "created_at": "2026-03-05T17:02:06Z",
+  "raw_api_url": "https://api.github.com/repos/MedouneSGB/javamind-ai/issues/5"
+}
