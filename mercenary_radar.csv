@@ -162,3 +162,4 @@ Please retry in 21.677203383s. [links {
 2026-03-05 01:53:02,APT-USDC,41907.56157%,"Daily profit is £6.00 * (41907.56157% / 365) = £6.89, so gas break-even is £0.30 / £6.89 = 0.0435 days. VERDICT: EXECUTE"
 2026-03-05 05:12:06,APT-USDC,41907.56157%,Daily profit is £6.00 * (41907.56157% / 365) ≈ £6.89; gas break-even is £0.30 / £6.89 ≈ 0.0435 days. VERDICT: EXECUTE.
 2026-03-05 08:37:44,WAVAX-USDC,18429.3617%,Daily profit is (£6.00 * 18429.3617%)/365 = £3.03. Gas break-even is £0.30 / £3.03 = 0.099 days. VERDICT: EXECUTE
+2026-03-05 12:54:51,WAVAX-USDC,17750.56687%,"Daily profit is £6.00 * (17750.56687% / 365) = £2.9179, making gas break-even £0.30 / £2.9179 = 0.1028 days. VERDICT: EXECUTE"
