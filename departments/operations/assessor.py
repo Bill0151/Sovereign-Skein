@@ -4,6 +4,7 @@ import csv
 import json
 import time
 import requests
+from datetime import datetime
 from google import genai
 from dotenv import load_dotenv
 
