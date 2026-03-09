@@ -1,9 +1,17 @@
+"""
+FILE: departments/operations/executor.py
+ROLE: The "Muscle" - Strike Node (Terminal 2)
+FUNCTION: Scans Ledger for DRAFT_REQUESTED, POST_REQUESTED, and VULTURE_AUTHORIZED flags.
+VERSION: V12.9 (Missing Sidecar Safeguard)
+"""
+
 import os
 import sys
 import csv
 import json
 import time
 import requests
+import subprocess
 from google import genai
 from dotenv import load_dotenv
 
@@ -19,73 +27,70 @@ if project_root not in sys.path:
 
 # --- SECURE VAULT DECRYPTION ---
 load_dotenv(os.path.join(project_root, '.env'))
-
 from core.redline_filter import RedLineFilter
 
 # --- V12.0 CONFIGURATION ---
 SETTINGS_FILE = os.path.join(project_root, 'core/settings.json')
 DATABASE_FILE = os.path.join(project_root, 'database/skein_index.csv')
-LEARNING_LOG = os.path.join(project_root, 'logs/self_learning.jsonl')
 VAULT_DIR = os.path.join(project_root, 'vault')
 
 def load_settings():
     if not os.path.exists(SETTINGS_FILE):
-        return {"bankroll": 6.0, "max_gas_gbp": 0.30, "autonomy_level": 1, "payout_wallet": "PENDING_WALLET_ADDRESS"}
+        return {"bankroll": 6.0, "autonomy_level": 1, "payout_wallet": "NOT_CONFIGURED"}
     with open(SETTINGS_FILE, 'r') as f:
         return json.load(f)
 
 def send_telegram(bot_token, chat_id, text):
-    if not bot_token or not chat_id:
-        return
+    if not bot_token or not chat_id: return
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
     try:
         requests.post(url, json=payload, timeout=10)
-    except Exception:
-        pass
+    except Exception: pass
 
 def get_sidecar_context(target_id):
-    sidecar_path = os.path.join(VAULT_DIR, f"T{target_id}", "intel.json")
-    if not os.path.exists(sidecar_path):
-        return None
-    with open(sidecar_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    raw_id = str(target_id).replace('T', '')
+    paths = [
+        os.path.join(VAULT_DIR, f"T{raw_id}", "intel.json"),
+        os.path.join(VAULT_DIR, f"{raw_id}", "intel.json")
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            with open(p, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    return None
 
-def get_learning_context():
-    context = ""
-    if os.path.exists(LEARNING_LOG):
-        with open(LEARNING_LOG, 'r', encoding='utf-8') as f:
-            lines = f.readlines()[-10:]
-            for line in lines:
-                try:
-                    data = json.loads(line)
-                    context += f"- Previous Correction: {data.get('feedback', '')}\n"
-                except json.JSONDecodeError:
-                    continue
-    return context
+def parse_github_url(url):
+    parts = url.rstrip('/').split('/')
+    if "issues" in parts:
+        i = parts.index("issues")
+        return parts[i-2], parts[i-1], parts[i+1]
+    return None, None, None
+
+def post_to_github(owner, repo, issue_number, payload, github_token):
+    strike_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments"
+    headers = {
+        "Authorization": f"token {github_token}", 
+        "Accept": "application/vnd.github.v3+json"
+    }
+    try:
+        res = requests.post(strike_url, headers=headers, json={"body": payload}, timeout=15)
+        return res.status_code == 201, res.text
+    except Exception as e:
+        return False, str(e)
 
 def heavy_compute(prompt, api_key):
+    client = genai.Client(api_key=api_key)
+    model_name = os.getenv("SKEIN_STRIKE_MODEL", "gemini-3.1-flash-lite-preview")
+    
     try:
-        print("🧠 MIND-SKEIN: Executing High-Fidelity Compute...")
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        print(f"🧠 MIND-SKEIN: Executing High-Fidelity Compute ({model_name})...")
+        response = client.models.generate_content(model=model_name, contents=prompt)
         if not response.text:
             return "CRITICAL BRAIN FAILURE: Blocked by API Safety Filters."
         return response.text.strip()
     except Exception as e:
         return f"CRITICAL BRAIN FAILURE: {str(e)}"
-
-def post_to_github(owner, repo, issue_number, payload, github_token):
-    strike_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments"
-    headers = {
-        "Authorization": f"token {github_token}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    res = requests.post(strike_url, headers=headers, json={"body": payload}, timeout=15)
-    if res.status_code == 201:
-        # Return success and the exact HTML URL to the new comment
-        return True, res.json().get('html_url', f"https://github.com/{owner}/{repo}/issues/{issue_number}")
-    return False, res.text
 
 def main():
     api_key = os.getenv("GEMINI_API_KEY")
@@ -94,15 +99,14 @@ def main():
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     
     if not all([api_key, github_token]):
-        print("Critical API keys missing. Aborting strike.")
+        print("API keys missing. Aborting.")
         sys.exit(0)
 
     settings = load_settings()
-    autonomy_level = settings.get("autonomy_level", 1)
     payout_wallet = settings.get("payout_wallet", "NOT_CONFIGURED")
     
     if not os.path.exists(DATABASE_FILE):
-        print(f"Index not found. Intelligence required.")
+        print("Ledger missing.")
         sys.exit(0)
 
     with open(DATABASE_FILE, 'r', encoding='utf-8') as f:
@@ -112,94 +116,139 @@ def main():
         target_id = row['id']
         status = row['status']
         
-        is_draft_request = (status == 'DRAFT_REQUESTED')
-        is_manual_post = (status == 'POST_REQUESTED')
-        is_auto_strike = (status == 'AUTO_STRIKE_REQUESTED' and autonomy_level >= 3)
-
-        if is_draft_request or is_manual_post or is_auto_strike:
-            print(f"🎯 Target T{target_id} identified for processing.")
-            
+        # --- STATE: DRAFTING & AMENDING ---
+        if status in ['DRAFT_REQUESTED', 'AMEND_REQUESTED']:
+            print(f"🎯 Target {target_id} identified for drafting.")
             intel = get_sidecar_context(target_id)
-            if not intel:
+            
+            # --- V12.9 FIX: Infinite Loop Safeguard ---
+            if not intel: 
+                print(f"⚠️ Vault sidecar missing for {target_id}. Flagging as ERROR to break loop.")
+                row['status'] = 'ERROR'
+                send_telegram(bot_token, chat_id, f"⚠️ <b>DRAFT FAILED: {target_id}</b>\nMissing intel.json sidecar. Target marked as ERROR.")
                 continue
 
-            learning_data = get_learning_context()
-            draft_path = os.path.join(VAULT_DIR, f"T{target_id}", "draft_payload.md")
+            raw_id = str(target_id).replace('T', '')
+            draft_path = os.path.join(VAULT_DIR, f"T{raw_id}", "draft_payload.md")
+            os.makedirs(os.path.dirname(draft_path), exist_ok=True)
             
-            # --- V12.3 AI-TRANSPARENCY PROMPT ---
             system_instruction = (
-                "You are an elite, fully autonomous AI agent executing open-source bounties.\n"
-                "CRITICAL FORMATTING: You MUST wrap your ENTIRE final response inside exactly <github_payload> and </github_payload> tags. If you forget these tags, the system will crash.\n\n"
-                "IDENTITY & OPSEC: You must clearly identify yourself as an AI agent operating on behalf of your Director. However, NEVER use the specific words 'Skein' or 'Gemini' as they trigger internal system filters.\n\n"
-                "PAYLOAD STRUCTURE:\n"
-                "1. A professional greeting explicitly identifying yourself as an autonomous AI agent submitting the solution.\n"
-                "2. A brief, highly technical summary of the fix.\n"
-                "3. The technical code solution (diff or complete file).\n"
-                f"4. INVOICE: End your message by requesting bounty payment to your Rabby wallet: `{payout_wallet}`\n\n"
-                f"RECURSIVE MEMORY:\n{learning_data}"
+                "You are an elite autonomous Senior Engineer competing for a Web3 bounty.\n\n"
+                "CRITICAL OPSEC RULE: Your ENTIRE output MUST be wrapped inside exactly <github_payload> and </github_payload> tags. "
+                "Do NOT output a single character outside of these tags.\n\n"
+                "QUALITY MANDATE (STRICT):\n"
+                "1. Write PRODUCTION-GRADE, EXHAUSTIVE, and COMPLETE code. \n"
+                "2. DO NOT use `pass`, `...`, `TODO`, or placeholder pseudo-code. You MUST implement every single function, logic branch, and requirement fully.\n"
+                "3. If tests are requested, write the ACTUAL robust test suite in Python. If CI integration is requested, write the ACTUAL full YAML file text.\n"
+                "4. Structure your response identically to a senior developer's pull request: Technical headers, architectural explanations, and complete code blocks for EVERY file.\n"
+                "5. Do NOT hallucinate test execution hashes or fake test results.\n"
+                "6. OPSEC LEXICON BAN: You MUST NOT use the words 'internal', 'skein', 'target', 'draft', 'assessor', 'executor', or 'gemini' ANYWHERE in your output. Use synonyms (e.g., use 'inner' or 'private' instead of 'internal').\n\n"
+                f"INVOICE: Request payment to: `{payout_wallet}`"
             )
             
-            # --- STATE: DRAFT REQUESTED ---
-            if is_draft_request:
-                user_prompt = f"Target Requirements:\n{intel.get('body', '')}\n\nDraft the complete solution and invoice inside the XML tags now."
-                raw_output = heavy_compute(f"{system_instruction}\n\n{user_prompt}", api_key)
-                
-                # Save the raw brain dump to the Vault for your review
-                with open(draft_path, 'w', encoding='utf-8') as f:
-                    f.write(raw_output)
-                
-                row['status'] = 'DRAFT_READY'
-                print(f"📄 Draft generated and saved to {draft_path}")
-                send_telegram(bot_token, chat_id, f"📄 <b>DRAFT READY: T{target_id}</b>\nReview `vault/T{target_id}/draft_payload.md`.")
-                continue
-
-            # --- STATE: POST REQUESTED (OR AUTO-STRIKE) ---
-            if is_manual_post or is_auto_strike:
-                # 1. Load from Draft if it exists, otherwise generate on the fly
-                if os.path.exists(draft_path):
-                    print(f"📂 Loading existing draft from {draft_path}")
-                    with open(draft_path, 'r', encoding='utf-8') as f:
-                        raw_output = f.read()
-                else:
-                    user_prompt = f"Target Requirements:\n{intel.get('body', '')}\n\nDraft the complete solution and invoice inside the XML tags now."
-                    raw_output = heavy_compute(f"{system_instruction}\n\n{user_prompt}", api_key)
+            raw_output = heavy_compute(f"{system_instruction}\n\nRequirements:\n{intel.get('body', '')}", api_key)
             
-                # --- RED-LINE PROTOCOL EXECUTION ---
-                scrubbed_payload, success = RedLineFilter.scrub(raw_output)
-                
-                if not success:
-                    print(f"\n🛑 RED-LINE ABORT: T{target_id} triggered the OPSEC filter.")
-                    # Still save the failing output so you can inspect it!
-                    with open(draft_path, 'w', encoding='utf-8') as f:
-                        f.write(raw_output)
-                    print(f"--- 🧠 Failing draft saved to {draft_path} ---")
-                    send_telegram(bot_token, chat_id, f"🛑 <b>RED-LINE ABORT: T{target_id}</b>\nStrike halted. Check vault draft.")
-                    continue
+            with open(draft_path, 'w', encoding='utf-8') as f: f.write(raw_output)
 
+            if "CRITICAL BRAIN FAILURE" in raw_output:
+                row['status'] = 'AMEND_REQUESTED'
+                send_telegram(bot_token, chat_id, f"⚠️ <b>DRAFT FAILED: {target_id}</b>\nTarget safely moved to AMEND_REQUESTED.\n<code>{raw_output[:100]}...</code>")
+            else:
+                row['status'] = 'DRAFT_READY'
+                send_telegram(bot_token, chat_id, f"📄 <b>DRAFT READY: {target_id}</b>\n🔗 <a href='{row['url']}'>View Issue</a>")
+
+        # --- STATE: LIVE STRIKE ---
+        elif status == 'POST_REQUESTED':
+            print(f"🚀 Target {target_id} identified for LIVE STRIKE.")
+            raw_id = str(target_id).replace('T', '')
+            draft_path = os.path.join(VAULT_DIR, f"T{raw_id}", "draft_payload.md")
+            
+            if not os.path.exists(draft_path):
+                row['status'] = 'ERROR'
+                send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED: {target_id}</b>\nDraft file missing from Vault.")
+                continue
+                
+            with open(draft_path, 'r', encoding='utf-8') as f:
+                raw_payload = f.read()
+                
+            print("🛡️ Applying Red-Line OPSEC Scrub...")
+            clean_payload, is_safe = RedLineFilter.scrub(raw_payload)
+            
+            if not is_safe:
+                row['status'] = 'AMEND_REQUESTED'
+                send_telegram(bot_token, chat_id, f"🛑 <b>OPSEC ABORT: {target_id}</b>\n{clean_payload}\nTarget moved back to drafting to prevent leak.")
+                continue
+                
+            owner, repo, issue_num = parse_github_url(row['url'])
+            if not all([owner, repo, issue_num]):
+                row['status'] = 'ERROR'
+                send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED: {target_id}</b>\nInvalid GitHub URL.")
+                continue
+            
+            print(f"📡 Transmitting payload to {owner}/{repo}#{issue_num}...")
+            success, err_msg = post_to_github(owner, repo, issue_num, clean_payload, github_token)
+            
+            if success:
+                row['status'] = 'COMPLETED'
+                send_telegram(bot_token, chat_id, f"✅👻 <b>STRIKE SUCCESSFUL - Target #{target_id}</b>\nBounty claimed. Awaiting maintainer review.")
+                
                 try:
-                    url_parts = row['url'].rstrip('/').split('/')
-                    owner, repo, issue_num = url_parts[-4], url_parts[-3], url_parts[-1]
-                except IndexError:
-                    print(f"Error parsing URL for T{target_id}: {row['url']}")
-                    continue
+                    telemetry_path = os.path.join(project_root, "departments", "finance", "telemetry.py")
+                    if os.path.exists(telemetry_path):
+                        subprocess.run([sys.executable, telemetry_path], check=True)
+                except Exception as e:
+                    print(f"⚠️ Telemetry auto-update failed: {e}")
+                    
+            else:
+                row['status'] = 'ERROR'
+                send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED - Target #{target_id}</b>\nAPI Error: {err_msg}")
 
-                print(f"🚀 Deploying Payload and Invoice to {owner}/{repo}...")
-                post_success, result_data = post_to_github(owner, repo, issue_num, scrubbed_payload, github_token)
+        # --- STATE: VULTURE STRIKE ---
+        elif status == 'VULTURE_AUTHORIZED':
+            print(f"🦅 Target {target_id} identified for VULTURE STRIKE.")
+            intel = get_sidecar_context(target_id)
+            if not intel: continue
+            
+            owner, repo, issue_num = parse_github_url(row['url'])
+            target_user = intel.get('vulture_target_user') or owner 
+            
+            try:
+                from departments.operations.vulture_strike import execute_vulture_strike
                 
-                if post_success:
+                print(f"📡 Executing zero-token engagement strike against @{target_user}...")
+                success = execute_vulture_strike(target_user, repo, issue_num)
+                
+                if success:
                     row['status'] = 'COMPLETED'
-                    print(f"✅ Strike Successful: T{target_id}")
-                    send_telegram(bot_token, chat_id, f"✅ <b>STRIKE SUCCESSFUL: T{target_id}</b>\n\nPayload deployed!\n🔗 <a href='{result_data}'>View Live Comment</a>")
+                    send_telegram(bot_token, chat_id, f"✅🦅 <b>VULTURE STRIKE SUCCESSFUL - #{target_id}</b>\nStars deployed and invoice posted.")
+                    try:
+                        telemetry_path = os.path.join(project_root, "departments", "finance", "telemetry.py")
+                        if os.path.exists(telemetry_path):
+                            subprocess.run([sys.executable, telemetry_path], check=True)
+                    except Exception: pass
                 else:
                     row['status'] = 'ERROR'
-                    print(f"❌ Strike Failed: {result_data}")
-                    send_telegram(bot_token, chat_id, f"❌ <b>STRIKE FAILED: T{target_id}</b>\n\nAPI Error: <code>{result_data}</code>")
+                    send_telegram(bot_token, chat_id, f"❌ <b>VULTURE STRIKE FAILED - #{target_id}</b>")
+            except ImportError as e:
+                print(f"❌ ERROR: Could not load vulture strike module: {e}")
+                row['status'] = 'ERROR'
 
-    # Update Index at the end of the run
     with open(DATABASE_FILE, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-        writer.writeheader()
-        writer.writerows(rows)
+        if rows:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
 
 if __name__ == "__main__":
-    main()
+    print("🟢 MIND-SKEIN V12 Strike Node Online (Executor Node).")
+    while True:
+        try:
+            main()
+        except Exception as e:
+            print(f"⚠️ UNEXPECTED ERROR IN MAIN LOOP: {e}")
+            
+        try:
+            time.sleep(10)
+        except KeyboardInterrupt:
+            print("\n🛑 Executor Node Shutdown Initiated by Director.")
+            sys.exit(0)

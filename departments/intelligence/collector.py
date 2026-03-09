@@ -1,3 +1,10 @@
+"""
+FILE: departments/intelligence/collector.py
+ROLE: The "Radar" - Intelligence Node
+FUNCTION: Scours GitHub for bounties, checks for existing claims, detects PR merges, and builds Vault sidecars.
+VERSION: V12.8 (Full Integration - PR/Merge & Semantic Filtering)
+"""
+
 import os
 import sys
 import csv
@@ -17,129 +24,197 @@ else:
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# --- SECURE VAULT DECRYPTION ---
 load_dotenv(os.path.join(project_root, '.env'))
 
-# --- V12.0 CONFIGURATION ---
 GITHUB_TOKEN = os.getenv("SKEIN_GITHUB_TOKEN")
 DATABASE_FILE = os.path.join(project_root, 'database/skein_index.csv')
 VAULT_DIR = os.path.join(project_root, 'vault')
 
-# Ensure directories exist
-os.makedirs(os.path.dirname(DATABASE_FILE), exist_ok=True)
-os.makedirs(VAULT_DIR, exist_ok=True)
+HEADERS = {
+    "Authorization": f"token {GITHUB_TOKEN}", 
+    "Accept": "application/vnd.github.v3+json"
+}
 
-# --- NEW: NEGATIVE KEYWORD FILTER ---
-BOT_SIGNATURES = [
-    "auto-update failed",
-    "pulse 20",
-    "dependency health report",
-    "ci daily health report",
-    "docs eval report",
-    "monthly activity",
-    "sync failed",
-    "github trending",
-    "automated tests("
+# --- V12.8 EXCLUSION LIST ---
+# Ignore non-coding bounties (Marketing, Social Media, Content Creation)
+EXCLUSION_KEYWORDS = [
+    "video", "tiktok", "instagram", "reels", "youtube", "shorts", 
+    "tweet", "social media", "marketing", "post", "reddit", "subreddit",
+    "article", "blog", "tutorial video", "explainer", "film"
 ]
 
-def search_github():
-    """Scours GitHub for high-value Python issues."""
-    print("📡 INTELLIGENCE: Initiating Radar Sweep...")
+def get_existing_ids():
+    """Reads the Ledger to ensure we don't process duplicate targets."""
+    if not os.path.exists(DATABASE_FILE):
+        return set()
+    try:
+        with open(DATABASE_FILE, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            return {row['id'] for row in reader}
+    except Exception as e:
+        print(f"⚠️ Warning: Could not read ledger: {e}")
+        return set()
+
+def check_for_pr_merges(issue_item):
+    """
+    V12.7 Update: Scans comments for 'PR', 'merged', or linked pull requests.
+    Prevents the Skein from striking a 'Ghost Bounty' that is already integrated.
+    """
+    comments_url = issue_item.get("comments_url")
+    if not comments_url or issue_item.get("comments", 0) == 0:
+        return False
+        
+    try:
+        res = requests.get(comments_url, headers=HEADERS)
+        if res.status_code != 200: 
+            return False
+            
+        comments = res.json()
+        owner = issue_item.get("user", {}).get("login")
+        
+        for c in comments:
+            body = c.get("body", "").lower()
+            author = c.get("user", {}).get("login")
+            
+            # TRIGGER 1: Maintainer mentions a PR or Merging
+            if author == owner and any(word in body for word in ["merged", "pull request", "pr #", "integrated"]):
+                return True
+            
+            # TRIGGER 2: Any user provides a specific PR link
+            if "github.com/" in body and "/pull/" in body:
+                return True
+                
+        return False
+    except Exception:
+        return False
+
+def create_vault_sidecar(target_id, issue_data):
+    """Creates the deep-context intel.json sidecar for the Assessor & Executor."""
+    raw_id = str(target_id).replace('T', '')
+    target_dir = os.path.join(VAULT_DIR, f"T{raw_id}")
+    os.makedirs(target_dir, exist_ok=True)
     
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
+    intel_path = os.path.join(target_dir, "intel.json")
+    
+    intel_data = {
+        "id": target_id,
+        "title": issue_data.get("title", ""),
+        "url": issue_data.get("html_url", ""),
+        "body": issue_data.get("body", "No description provided."),
+        "created_at": issue_data.get("created_at", ""),
+        "vulture_target_user": issue_data.get("user", {}).get("login", "Unknown"),
+        "skein_status": "PENDING"
     }
     
-    # Example Query: Open issues in Python with 'bounty' or 'reward' created recently
+    with open(intel_path, 'w', encoding='utf-8') as f:
+        json.dump(intel_data, f, indent=4)
+        
+    return intel_path
+
+def search_github():
+    print("📡 INTELLIGENCE: Initiating V12.8 Radar Sweep...")
+    
+    existing_ids = get_existing_ids()
+    
+    # We look for open python issues with bounty/reward tags
     query = "is:issue is:open language:python (bounty OR reward OR \"help wanted\") no:assignee"
     url = f"https://api.github.com/search/issues?q={query}&sort=created&order=desc&per_page=30"
     
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=HEADERS)
         response.raise_for_status()
         data = response.json()
         
         new_targets = []
+        
         for item in data.get("items", []):
+            target_id = f"T{item['id']}"
             title = item.get("title", "")
             
-            # --- APPLY NEGATIVE FILTER ---
-            title_lower = title.lower()
-            is_bot = any(bot_sig in title_lower for bot_sig in BOT_SIGNATURES)
-            
-            if is_bot:
-                print(f"   [FILTERED] Bot detected: {title}")
+            # Skip if we've already seen it
+            if target_id in existing_ids or item['id'] in existing_ids or str(item['id']) in existing_ids:
                 continue
                 
-            # Convert GitHub Issue ID to our internal Target ID (T-prefix)
-            target_id = f"T{item['id']}"
+            # V12.8: Semantic Filtering for Non-Coding Bounties
+            title_lower = title.lower()
+            if any(keyword in title_lower for keyword in EXCLUSION_KEYWORDS):
+                print(f"   [🚫 FILTERED] Non-technical target ignored: {title[:40]}...")
+                # Log it as closed/missed so we don't scan it again
+                new_targets.append({
+                    "id": target_id,
+                    "status": "CLOSED_MISSED",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "title": title,
+                    "url": item.get("html_url"),
+                    "payout_est": "0"
+                })
+                continue
             
-            # Extract basic intel
-            intel = {
+            # V12.7: PR Merge Detection
+            if check_for_pr_merges(item):
+                print(f"   [👻 GHOST BOUNTY] PR detected/merged: {title[:40]}...")
+                # Log it as closed/missed so we don't scan it again
+                new_targets.append({
+                    "id": target_id,
+                    "status": "CLOSED_MISSED",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "title": title,
+                    "url": item.get("html_url"),
+                    "payout_est": "0"
+                })
+                continue
+            
+            # Build Sidecar Context
+            create_vault_sidecar(target_id, item)
+            
+            # Try to extract a rough payout estimate from the title for the HUD
+            payout_est = "TBD"
+            import re
+            match = re.search(r'(\d+)\s*(RTC|SOL|USDC|ETH|\$)', title, re.IGNORECASE)
+            if match:
+                payout_est = f"{match.group(1)} {match.group(2).upper()}"
+            
+            print(f"   [🎯 NEW TARGET] {title[:50]}...")
+            
+            new_targets.append({
                 "id": target_id,
+                "status": "PENDING",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "title": title,
                 "url": item.get("html_url"),
-                "body": item.get("body", "")[:2000], # Grab first 2000 chars of context
-                "repository_url": item.get("repository_url"),
-                "created_at": item.get("created_at")
-            }
-            new_targets.append(intel)
+                "payout_est": payout_est
+            })
             
         return new_targets
-        
-    except requests.exceptions.RequestException as e:
-        print(f"❌ INTELLIGENCE ERROR: GitHub API connection failed: {e}")
+    except Exception as e:
+        print(f"❌ RADAR ERROR: {e}")
         return []
 
-def update_database(new_targets):
-    """Adds new targets to the CSV and creates vault sidecars."""
-    print(f"💾 INTELLIGENCE: Processing {len(new_targets)} potential targets...")
+def update_database(new_rows):
+    """Appends new targets to the V12 Ledger."""
+    if not new_rows:
+        print("📭 Radar sweep complete. No new viable targets found.")
+        return
+
+    file_exists = os.path.exists(DATABASE_FILE)
+    fieldnames = ["id", "status", "timestamp", "title", "url", "payout_est"]
     
-    existing_ids = set()
-    
-    # Read existing IDs to avoid duplicates
-    if os.path.exists(DATABASE_FILE):
-        with open(DATABASE_FILE, mode='r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                existing_ids.add(row['id'])
-                
-    new_additions = 0
-    
-    # Append new targets
-    with open(DATABASE_FILE, mode='a', newline='', encoding='utf-8') as f:
-        fieldnames = ['id', 'status', 'timestamp', 'title', 'url', 'payout_est', 'sidecar_link']
+    with open(DATABASE_FILE, 'a', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
-        
-        if not existing_ids:
+        if not file_exists:
             writer.writeheader()
             
-        for target in new_targets:
-            if target['id'] not in existing_ids:
-                # 1. Create Vault Sidecar (Full Context)
-                target_dir = os.path.join(VAULT_DIR, target['id'])
-                os.makedirs(target_dir, exist_ok=True)
-                sidecar_path = os.path.join(target_dir, 'intel.json')
-                
-                with open(sidecar_path, 'w', encoding='utf-8') as sf:
-                    json.dump(target, sf, indent=4)
-                    
-                # 2. Add to Ledger (Fast Lookup)
-                writer.writerow({
-                    'id': target['id'],
-                    'status': 'PENDING',
-                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'title': target['title'],
-                    'url': target['url'],
-                    'payout_est': '0.00', # Assessor agent will update this later
-                    'sidecar_link': f"vault/{target['id']}/intel.json"
-                })
-                new_additions += 1
-                
-    print(f"✅ INTELLIGENCE: Added {new_additions} new viable targets to the index.")
+        for row in new_rows:
+            # Ensure all keys exist to prevent CSV misalignment
+            safe_row = {k: row.get(k, "") for k in fieldnames}
+            writer.writerow(safe_row)
+            
+    print(f"✅ Indexed {len(new_rows)} new targets to the Ledger.")
 
 if __name__ == "__main__":
-    targets = search_github()
-    if targets:
-        update_database(targets)
+    if not GITHUB_TOKEN:
+        print("❌ SKEIN_GITHUB_TOKEN missing from .env.")
+        sys.exit(1)
+        
+    new_targets = search_github()
+    update_database(new_targets)
