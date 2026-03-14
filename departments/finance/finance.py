@@ -2,6 +2,7 @@
 FILE: departments/finance/finance.py
 ROLE: The "Treasury" - Finance Node
 FUNCTION: Base L2 Wallet Management, AI-Intent to Calldata, and Autonomous USDC Settlement.
+VERSION: V12.1 (Dual-Wallet Architecture Support)
 """
 
 import os
@@ -29,7 +30,11 @@ env_path = os.path.join(project_root, '.env')
 load_dotenv(env_path)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-WALLET_ADDRESS = os.getenv("SKEIN_WALLET_ADDRESS") # Target Base L2 Wallet
+
+# --- DUAL WALLET ARCHITECTURE ---
+# Explicitly look for the EVM wallet. Fallback to SKEIN_WALLET only if it's an 0x string.
+_raw_evm = os.getenv("EVM_WALLET_ADDRESS", os.getenv("SKEIN_WALLET_ADDRESS", ""))
+EVM_WALLET_ADDRESS = _raw_evm if _raw_evm.startswith("0x") else None
 PRIVATE_KEY = os.getenv("SKEIN_PRIVATE_KEY")       # Target Base L2 Private Key
 
 # Default to Level 3 (Shadow Trials only) if not explicitly set to 4 or 5
@@ -61,10 +66,11 @@ class BaseTreasury:
 
     def get_balances(self):
         """Fetches live ETH (for gas) and USDC balances."""
-        if not WALLET_ADDRESS:
+        if not EVM_WALLET_ADDRESS:
+            print("⚠️ TREASURY WARNING: No valid 0x EVM_WALLET_ADDRESS found in .env")
             return {"ETH": 0.0, "USDC": 0.0}
             
-        address = self.w3.to_checksum_address(WALLET_ADDRESS)
+        address = self.w3.to_checksum_address(EVM_WALLET_ADDRESS)
         eth_wei = self.w3.eth.get_balance(address)
         eth_balance = self.w3.from_wei(eth_wei, 'ether')
         
@@ -76,7 +82,6 @@ class BaseTreasury:
     def parse_ai_intent(self, intent_string):
         """
         Translates a natural language command into structured transaction data using Gemini.
-        Example Intent: "Pay the API provider 5.5 USDC at 0x123...abc"
         """
         print(f"🧠 TREASURY: Translating Intent -> Calldata...")
         client = genai.Client(api_key=GEMINI_API_KEY)
@@ -98,12 +103,10 @@ class BaseTreasury:
         """
         
         try:
-            # Using 3.1 Flash Lite (500 RPD quota) for rapid intent parsing
             res = client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
             clean_json = res.text.strip().replace("```json", "").replace("```", "")
             tx_data = json.loads(clean_json)
             
-            # Basic validation
             if tx_data.get('action') == 'transfer' and self.w3.is_address(tx_data.get('to_address')):
                 return tx_data
             else:
@@ -167,16 +170,13 @@ class BaseTreasury:
 
     def _execute_live_usdc_transfer(self, to_address, amount_usdc):
         """DANGER: Actually signs and broadcasts a Web3 transaction."""
-        if not WALLET_ADDRESS or not PRIVATE_KEY:
-            print("❌ TREASURY ERROR: Live execution failed. Missing SKEIN_WALLET_ADDRESS or SKEIN_PRIVATE_KEY in .env.")
+        if not EVM_WALLET_ADDRESS or not PRIVATE_KEY:
+            print("❌ TREASURY ERROR: Live execution failed. Missing EVM_WALLET_ADDRESS or SKEIN_PRIVATE_KEY in .env.")
             return
             
         try:
-            # Convert normal amount to USDC decimals (6)
             raw_amount = int(amount_usdc * (10 ** self.usdc_decimals))
-            
-            # Build the transaction dictionary
-            nonce = self.w3.eth.get_transaction_count(self.w3.to_checksum_address(WALLET_ADDRESS))
+            nonce = self.w3.eth.get_transaction_count(self.w3.to_checksum_address(EVM_WALLET_ADDRESS))
             
             tx = self.usdc_contract.functions.transfer(to_address, raw_amount).build_transaction({
                 'chainId': 8453, # Base Mainnet Chain ID
@@ -185,14 +185,12 @@ class BaseTreasury:
                 'nonce': nonce,
             })
             
-            # Sign and Send
             print("   Signing transaction...")
             signed_tx = self.w3.eth.account.sign_transaction(tx, private_key=PRIVATE_KEY)
             
             print("   Broadcasting to Base L2...")
-            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction) # Changed to rawTransaction for web3 v6 compat
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
             
-            # Convert hash to hex string
             hex_hash = self.w3.to_hex(tx_hash)
             print(f"✅ LIVE TRANSACTION SENT! TX Hash: {hex_hash}")
             print(f"🔍 View on basescan: https://basescan.org/tx/{hex_hash}")
@@ -204,14 +202,11 @@ if __name__ == "__main__":
     print("🟢 MIND-SKEIN V12 Treasury Uplink Established.")
     treasury = BaseTreasury()
     
-    # 1. Check Balances
     balances = treasury.get_balances()
     print(f"💰 Vault Balances: {balances['ETH']:.6f} ETH | {balances['USDC']:.2f} USDC")
     
-    # 2. Test the AI Intent Engine
     test_intent = "Please send 2.5 USDC to the smart contract address 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B for the API fees."
     parsed_tx = treasury.parse_ai_intent(test_intent)
     
-    # 3. Process through the Autonomy Gate
     if parsed_tx:
         treasury.execute_transaction(parsed_tx)

@@ -5,6 +5,6 @@
   "bankroll_gbp": 6.0,
   "gas_threshold_gbp": 0.30,
   "target_milestone_gbp": 4000.0,
-  "payout_wallet": "0xFb39098275D224965a938f5cCAB512BbF737bdc7",
+  "payout_wallet": "RTCd06cb051a224204f8b086c1ce248849cba05ffbd",
   "opsec_enabled": true
 }

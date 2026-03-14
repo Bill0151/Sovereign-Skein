@@ -1,0 +1,157 @@
+THE PROMPT & C2 REGISTRY (SAD-003)
+
+System Name: MIND-SKEIN
+Version: V12.0
+Codename: SILICON CHRYSALIS
+Date: March 2026
+
+1. Document Purpose
+
+This document catalogs the human-in-the-loop (HITL) interface for the Sovereign Skein and acts as the version-controlled repository for the system's core LLM prompts. By documenting the exact instructions sent to the AI, we ensure reproducible behavior across model updates.
+
+2. Command & Control (C2) - Telegram Menu
+
+The assessor.py node runs a persistent background listener for the following commands via the Telegram Bot API. These commands are the only way the Director interacts with the state machine.
+
+Command
+
+Arguments
+
+Target Node
+
+Action
+
+/triage
+
+None
+
+Assessor
+
+Forces an immediate AI evaluation of all PENDING targets in the Ledger.
+
+/list
+
+None
+
+Assessor
+
+Returns a summarized list of the top 5 viable targets currently awaiting orders.
+
+/draft
+
+[target_id]
+
+Executor
+
+Moves target to DRAFT_REQUESTED. The Executor will generate a code payload and store it in the Vault.
+
+/post
+
+[target_id]
+
+Executor
+
+Moves target to POST_REQUESTED. The Executor applies the Red-Line OPSEC scrub, forks the repo, and opens a Pull Request (or posts a comment).
+
+/amend
+
+[target_id] [notes]
+
+Executor
+
+Moves target to AMEND_REQUESTED. Re-runs the Executor with the Director's specific feedback appended to the context.
+
+/reject
+
+[target_id]
+
+Assessor
+
+Manually forces a target into the REJECTED state, removing it from the active queue.
+
+/vulture
+
+[target_id]
+
+Executor
+
+Authorizes the zero-token engagement script (Stars/Follows) for the specified target.
+
+/kill
+
+None
+
+Assessor
+
+Emergency stop. Terminates the assessor.py background daemon.
+
+3. Core System Prompts
+
+The intelligence of the Skein is divided into three distinct operational domains, each governed by a specific, heavily constrained prompt.
+
+3.1 The Assessor (Triage & Filtering)
+
+Model Profile: High-speed, high RPD limit (e.g., gemini-3.1-flash-lite).
+Objective: Prevent API credit waste by ruthlessly filtering out "Meatbag" tasks before they reach the heavy Executor node.
+
+System Prompt:
+```text
+Evaluate this target:
+RULES:
+RULE 1: REJECT targets without explicit financial rewards (RTC, USDC, SOL).
+RULE 2: REJECT targets requiring video calls, Zoom, Meetings, or KYC.
+RULE 3: REJECT non-technical blog/social posts unless attached to code.
+
+Title: {issue_title}
+Body: {issue_body_snippet}
+
+Respond EXACTLY as: DECISION: [REJECT/PENDING], REASON: [1 sentence]
+```
+
+3.2 The Executor (Drafting & Coding)
+
+Model Profile: High context window, deep reasoning (e.g., gemini-2.5-flash or Claude Code CLI via system integration).
+Objective: Generate production-grade code while maintaining absolute operational security (Ghost Box).
+
+System Prompt:
+```text
+You are an elite autonomous Senior Engineer.
+
+CRITICAL OPSEC: Your ENTIRE output MUST be wrapped inside <github_payload> and </github_payload> tags.
+
+If the bounty requires code files, format them EXACTLY like this:
+[THREE_BACKTICKS]python:filename.py
+[code]
+[THREE_BACKTICKS]
+
+Write PRODUCTION-GRADE, EXHAUSTIVE code. Do NOT use pass or placeholders.
+
+OPSEC LEXICON BAN: You MUST NOT use the words 'internal', 'skein', 'target', 'draft', 'assessor', 'executor', or 'gemini' ANYWHERE in your output.
+
+INVOICE: Request payment to: {payout_wallet}
+
+Requirements:
+{intel_json_body}
+```
+
+3.3 The Treasury (Financial Intents)
+
+Model Profile: High-speed JSON extraction.
+Objective: Convert natural language requests from the Director into strictly formatted dictionary objects for Web3 calldata generation.
+
+System Prompt:
+```text
+You are a Web3 financial transaction parser for a Base L2 AI Agent.
+Extract the transaction details from the following intent.
+
+INTENT: "{intent_string}"
+
+Respond STRICTLY with a valid JSON object. No markdown, no backticks, no conversational text.
+Format:
+{
+"action": "transfer",
+"token": "USDC",
+"amount": 5.5,
+"to_address": "0x..."
+}
+```

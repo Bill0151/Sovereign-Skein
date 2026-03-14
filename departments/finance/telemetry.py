@@ -39,7 +39,7 @@ def calculate_metrics(rows, settings):
     usdc_balance = 0.0
     
     try:
-        # Dynamically load the Treasury Node to check the actual blockchain
+        # Dynamically load the Treasury Node to check the actual EVM blockchain
         from departments.finance.finance import BaseTreasury
         treasury = BaseTreasury()
         balances = treasury.get_balances()
@@ -50,15 +50,17 @@ def calculate_metrics(rows, settings):
         eth_gbp = eth_balance * 2500.0
         usdc_gbp = usdc_balance * 0.78
         
-        # V12.20 FIX: Pure Cryptographic Truth. We no longer add the fiat 'bankroll_gbp'
+        # V12.20 FIX: Pure Cryptographic Truth.
         current_treasury = eth_gbp + usdc_gbp
-        wallet_live = True
-        print(f"🔗 LIVE WALLET LINKED: {eth_balance:.4f} ETH | {usdc_balance:.2f} USDC")
+        # If Treasury returns 0 because of invalid env setup, we fall back gracefully
+        if eth_balance > 0 or usdc_balance > 0:
+            wallet_live = True
+            print(f"🔗 LIVE EVM WALLET LINKED: {eth_balance:.4f} ETH | {usdc_balance:.2f} USDC")
             
     except SystemExit:
         print("⚠️ Base L2 RPC unreachable. Falling back to Ledger estimates.")
     except Exception as e:
-        print(f"⚠️ Could not read Treasury wallet: {e}. Falling back to Ledger estimates.")
+        print(f"⚠️ Could not read Treasury EVM wallet: {e}. Falling back to Ledger estimates.")
         
     # --- FALLBACK: ESTIMATED LEDGER REVENUE ---
     if not wallet_live:
@@ -113,7 +115,7 @@ def main():
     
     # --- V12.19 Terminal Output Enhancement ---
     if metrics.get('wallet_live'):
-        print(f"🪙  Live Wallet: {metrics['eth_balance']:.4f} ETH | {metrics['usdc_balance']:.2f} USDC")
+        print(f"🪙  Live EVM Wallet: {metrics['eth_balance']:.4f} ETH | {metrics['usdc_balance']:.2f} USDC")
         
     print(f"🦋 Chrysalis Progress: {metrics['progress_percent']}% (£{metrics['treasury_gbp']}/£{metrics['target_gbp']})")
 
